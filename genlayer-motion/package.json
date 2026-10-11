@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "audio": "python3 src/audio.py out/soundtrack.wav",
-    "render": "node src/render.js",
+    "audio": "node src/events.js out/events.json && python3 src/audio.py out/events.json out/soundtrack.wav",
+    "render": "node src/render.js --fps 30 --workers 3",
     "build": "npm run audio && npm run render"
   },
   "dependencies": {

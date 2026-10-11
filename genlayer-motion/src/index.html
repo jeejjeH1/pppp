@@ -16,12 +16,16 @@
   canvas { display: block; }
   #overlay, #hud { position: absolute; inset: 0; pointer-events: none; font-family: 'Inter Display', 'Inter', sans-serif; color: #fff; }
   .cue { position: absolute; white-space: nowrap; will-change: transform, opacity, filter; }
-  .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0.04em 0.02em 0.14em; margin-bottom: -0.1em; }
+  .w { display: inline-block; vertical-align: top; padding: 0.04em 0.02em 0.14em; margin-bottom: -0.1em; }
   .wi { display: inline-block; transform-origin: 50% 80%; }
-  .grad { filter: drop-shadow(0 4px 18px rgba(0,0,0,.55)); }
-  .grad .wi { background: linear-gradient(100deg, #ffe0ff 0%, var(--pink) 35%, #e64dff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .mint .wi { color: var(--mint); text-shadow: 0 0 34px rgba(168,255,210,.45); }
-
+  .c { display: inline-block; position: relative; white-space: pre; }
+  .grad .c { text-shadow: 0 0 30px rgba(220,0,255,.45); }
+  .mint .c { color: var(--mint); text-shadow: 0 0 34px rgba(168,255,210,.45); }
+  .c.hot { color: #ffffff !important; text-shadow: 0 0 14px #fff, 0 0 30px var(--mint) !important; }
+  .c.scr { color: var(--mint) !important; opacity: .8; text-shadow: 0 0 12px rgba(168,255,210,.8); }
+  .c.cur::after { content: ''; position: absolute; left: calc(100% + 0.06em); top: 0.12em; bottom: 0.08em; width: 0.42em;
+                  background: var(--mint); box-shadow: 0 0 18px var(--mint); }
+  .mono .c.cur::after, .kicker .c.cur::after { width: 0.6em; }
   .h1 { font-weight: 900; font-size: 104px; line-height: 1.02; letter-spacing: -0.035em; text-shadow: 0 6px 40px rgba(0,0,0,.55); }
   .h2 { font-weight: 800; font-size: 76px; line-height: 1.05; letter-spacing: -0.03em; text-shadow: 0 6px 30px rgba(0,0,0,.6); }
   .h3 { font-weight: 700; font-size: 58px; line-height: 1.12; letter-spacing: -0.02em; text-shadow: 0 4px 24px rgba(0,0,0,.7); }
@@ -31,7 +35,7 @@
   .mono { font-family: 'DejaVu Sans Mono', monospace; font-size: 28px; color: var(--mint); letter-spacing: 0.06em; }
   .center { left: 0; right: 0; text-align: center; }
   .num { font-weight: 900; font-size: 250px; line-height: 0.9; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 3px var(--pink); }
-  .num .wi { color: transparent; }
+  .num .c { color: transparent !important; text-shadow: 0 0 40px rgba(255,135,255,.35); }
   .brand { font-weight: 900; font-size: 120px; letter-spacing: 0; }
 
   .chips { display: flex; gap: 22px; justify-content: center; align-items: center; }

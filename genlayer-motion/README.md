@@ -8,7 +8,9 @@
 - 3D mascot (the cat astronaut from `assets/character-reference.jpg`) modelled in Three.js
 - 3D extruded GenLayer logo traced from `assets/logo.png`
 - Palette: `#ff87ff`, `#dc00ff`, mint green `#a8ffd2` on a simple dark background
-- Procedural synthwave soundtrack (120 BPM), every cut and impact locked to the beat
+- Procedural electronic soundtrack (120 BPM) with drops, build-ups and stutter edits; every cut locked to the beat
+- Text effects: typewriter with cursor, decode/scramble, per-letter rise, glitch slams, each with synced SFX (key clicks, blips, hits)
+- Beat-reactive visuals: zoom punch and bloom pulse on every kick
 
 ## Storyboard
 
@@ -27,7 +29,8 @@
 
 ```bash
 npm install
-python3 src/audio.py out/soundtrack.wav        # needs numpy + scipy
+node src/events.js out/events.json            # text/drum timings for the soundtrack
+python3 src/audio.py out/events.json out/soundtrack.wav   # needs numpy + scipy
 node src/render.js --fps 30 --workers 3        # -> out/genlayer.mp4
 node src/render.js --stills 5,20,48            # preview frames -> out/stills/
 ```

@@ -11,7 +11,7 @@ import { makeCharacter, makeHead } from './character.js';
 import { makeLogoMesh } from './logo.js';
 import { makeCardTexture, makeGlowSprite, makeCoinTexture } from './textures.js';
 import { Overlay } from './overlay.js';
-import { CUES, SCENES, IMPACTS, DURATION } from './timeline.js';
+import { CUES, SCENES, IMPACTS, DURATION, KICK, CLAP, DROPS } from './timeline.js';
 
 const W = 1920;
 const H = 1080;
@@ -486,6 +486,20 @@ function cardAt(m, t, a, b, x, y, z, ry = 0, rz = 0) {
   m.material.opacity = e;
 }
 
+// beat-reactive envelopes (120 BPM, same sections as the soundtrack)
+const inSec = (secs, x) => secs.some(([a, b]) => x >= a - 1e-6 && x < b);
+function kickEnv(t) {
+  const b = Math.floor(t * 2 + 1e-6) / 2;
+  return inSec(KICK, b) ? Math.exp(-(t - b) * 9) : 0;
+}
+function clapEnv(t) {
+  const n = Math.floor(t * 2 + 1e-6);
+  const b = n / 2;
+  return inSec(CLAP, b) && n % 2 === 1 ? Math.exp(-(t - b) * 12) : 0;
+}
+// silence right before each drop: screen sinks, then the drop hits
+const dropGap = (t) => Math.max(...DROPS.map((d) => (t >= d - 0.5 && t < d ? eInExpo(lin(t, d - 0.5, d)) : 0)));
+
 const sceneIdx = (t) => SCENES.findIndex((s) => t >= s.start && t < s.end);
 
 function renderAt(t) {
@@ -818,6 +832,14 @@ function renderAt(t) {
   camera.position.y += Math.cos(t * 77) * sh;
   camera.lookAt(look);
   camera.rotation.z += Math.sin(t * 53) * sh * 0.15;
+  // beat punch: quick zoom on every kick, tiny roll on claps
+  const kk = kickEnv(t);
+  const cl = clapEnv(t);
+  const gap = dropGap(t);
+  camera.fov = camera.fov * (1 - kk * 0.022 + gap * 0.06);
+  camera.updateProjectionMatrix();
+  camera.rotation.z += cl * 0.006 * (Math.floor(t * 2) % 4 === 1 ? 1 : -1);
+  bgMat.uniforms.uGlow.value *= 1 + kk * 0.4 + cl * 0.2;
 
   // global uniforms
   bgMat.uniforms.uTime.value = t;
@@ -827,15 +849,17 @@ function renderAt(t) {
   fx.uniforms.uTime.value = t;
   const glitch = S.id === 'reasons' && t > 31 && t < 34 ? (Math.floor(t * 18) % 7 === 0 ? 1 : 0.15) : 0;
   fx.uniforms.uGlitch.value = glitch + Math.min(impact, 1) * 0.25;
-  fx.uniforms.uAberr.value = 0.0025 + Math.min(impact, 1.5) * 0.012 + glitch * 0.01;
+  fx.uniforms.uAberr.value = 0.0025 + Math.min(impact, 1.5) * 0.012 + glitch * 0.01 + kk * 0.0025 + gap * 0.01;
   fx.uniforms.uFlash.value = Math.min(flash, 1) * 0.85;
-  fx.uniforms.uFade.value = Math.min(lin(t, 0, 0.35), 1 - lin(t, DURATION - 0.8, DURATION));
-  bloom.strength = 0.9 + Math.min(impact, 1) * 0.6;
+  fx.uniforms.uFade.value = Math.min(lin(t, 0, 0.35), 1 - lin(t, DURATION - 0.8, DURATION)) * (1 - gap * 0.55);
+  fx.uniforms.uGlitch.value += gap * 0.6;
+  bloom.strength = 0.9 + Math.min(impact, 1) * 0.6 + kk * 0.35 + cl * 0.15;
 
   composer.render();
 
   // overlay + HUD
   overlay.update(t);
+  document.getElementById('overlay').style.transform = `scale(${1 + kk * 0.006 - gap * 0.02})`;
   hud.style.opacity = String(env(t, 4.2, DURATION - 0.6, 0.6, 0.6) * 0.9);
   hudScene.textContent = String(Math.max(1, si + 1)).padStart(2, '0');
   const f = Math.floor((t % 1) * 30);
