@@ -443,7 +443,6 @@ const overlay = new Overlay(document.getElementById('overlay'), CUES);
 const hud = document.getElementById('hud');
 const hudScene = document.getElementById('hud-scene');
 const hudTc = document.getElementById('hud-tc');
-const progress = document.querySelector('#progress i');
 
 // ---------------------------------------------------------------- per-frame
 const look = new THREE.Vector3();
@@ -841,7 +840,6 @@ function renderAt(t) {
   hudScene.textContent = String(Math.max(1, si + 1)).padStart(2, '0');
   const f = Math.floor((t % 1) * 30);
   hudTc.textContent = `00:${String(Math.floor(t)).padStart(2, '0')}:${String(f).padStart(2, '0')}`;
-  progress.style.width = `${(t / DURATION) * 100}%`;
   document.getElementById('overlay').style.opacity = String(1 - lin(t, DURATION - 0.8, DURATION));
 }
 
