@@ -1,0 +1,16 @@
+{
+  "name": "genlayer-motion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "audio": "python3 src/audio.py out/soundtrack.wav",
+    "render": "node src/render.js",
+    "build": "npm run audio && npm run render"
+  },
+  "dependencies": {
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}
