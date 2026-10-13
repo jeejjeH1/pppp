@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>GenLayer — Thread of Light</title>
+<script type="importmap">
+{ "imports": {
+  "three": "/node_modules/three/build/three.module.js",
+  "three/addons/": "/node_modules/three/examples/jsm/"
+} }
+</script>
+<style>
+  :root { --pink: #ff87ff; --purple: #dc00ff; --mint: #a8ffd2; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #07030c; }
+  #stage { position: absolute; inset: 0; }
+  canvas { display: block; }
+  #overlay, #hud { position: absolute; inset: 0; pointer-events: none; font-family: 'Inter Display', 'Inter', sans-serif; color: #fff; }
+  .cue { position: absolute; white-space: nowrap; will-change: transform, opacity, filter; }
+  .w { display: inline-block; vertical-align: top; padding: 0.04em 0.02em 0.14em; margin-bottom: -0.1em; }
+  .wi { display: inline-block; transform-origin: 50% 80%; }
+  .c { display: inline-block; position: relative; white-space: pre; }
+  .grad .c { text-shadow: none; }
+  .mint .c { color: var(--mint); }
+  .c.hot { color: #ffffff !important; text-shadow: 0 0 14px #fff, 0 0 30px var(--mint) !important; }
+  .c.scr { color: var(--mint) !important; opacity: .8; text-shadow: 0 0 12px rgba(168,255,210,.8); }
+  .c.cur::after { content: ''; position: absolute; left: calc(100% + 0.06em); top: 0.12em; bottom: 0.08em; width: 0.42em;
+                  background: var(--mint); box-shadow: 0 0 18px var(--mint); }
+  .mono .c.cur::after, .kicker .c.cur::after { width: 0.6em; }
+  .h1 { font-weight: 600; font-size: 90px; line-height: 1.08; letter-spacing: -0.03em; text-shadow: 0 4px 30px rgba(0,0,0,.5); }
+  .h2 { font-weight: 500; font-size: 68px; line-height: 1.1; letter-spacing: -0.025em; text-shadow: 0 4px 26px rgba(0,0,0,.55); }
+  .h3 { font-weight: 400; font-size: 54px; line-height: 1.12; letter-spacing: -0.02em; text-shadow: 0 4px 24px rgba(0,0,0,.7); }
+  .body { font-family: 'Inter'; font-weight: 400; font-size: 34px; line-height: 1.45; color: rgba(255,255,255,.72); text-shadow: 0 2px 18px rgba(0,0,0,.8); }
+  .kicker { font-family: 'DejaVu Sans Mono', monospace; font-weight: 400; font-size: 22px; letter-spacing: 0.4em; color: var(--mint); opacity: .85; text-transform: uppercase; }
+  .kicker.pink { color: var(--pink); }
+  .mono { font-family: 'DejaVu Sans Mono', monospace; font-size: 28px; color: var(--mint); letter-spacing: 0.06em; }
+  .center { left: 0; right: 0; text-align: center; }
+  .num { font-weight: 900; font-size: 200px; line-height: 0.9; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1.5px rgba(255,135,255,.7); font-weight: 300; }
+  .num .c { color: transparent !important; }
+  .brand { font-weight: 500; font-size: 108px; letter-spacing: -0.01em; }
+
+  .chips { display: flex; gap: 22px; justify-content: center; align-items: center; }
+  .chip { font-family: 'Inter'; font-weight: 500; font-size: 28px; letter-spacing: 0.06em; padding: 16px 32px; border-radius: 999px;
+          border: 1.5px solid rgba(255,135,255,.6); background: rgba(220,0,255,.06); }
+  .chip.mint { border-color: rgba(168,255,210,.6); background: rgba(168,255,210,.05); color: var(--mint); }
+  .chip.op { border: none; background: none; box-shadow: none; font-size: 40px; font-weight: 300; padding: 0 4px; color: rgba(255,255,255,.7); }
+
+  /* HUD */
+  #hud { opacity: 0; }
+  .corner { position: absolute; width: 46px; height: 46px; border-color: rgba(255,135,255,.75); border-style: solid; border-width: 0; }
+  .corner.tl { left: 44px; top: 44px; border-left-width: 3px; border-top-width: 3px; }
+  .corner.tr { right: 44px; top: 44px; border-right-width: 3px; border-top-width: 3px; }
+  .corner.bl { left: 44px; bottom: 44px; border-left-width: 3px; border-bottom-width: 3px; }
+  .corner.br { right: 44px; bottom: 44px; border-right-width: 3px; border-bottom-width: 3px; }
+  .hudtxt { position: absolute; font-family: 'DejaVu Sans Mono', monospace; font-size: 17px; letter-spacing: 0.24em; color: rgba(255,255,255,.62); }
+  .hudtxt b { color: var(--pink); font-weight: 700; }
+  #hud-tl { left: 112px; top: 58px; }
+  #hud-tr { right: 112px; top: 58px; text-align: right; }
+  #hud-bl { left: 112px; bottom: 56px; }
+  #hud-br { right: 112px; bottom: 56px; text-align: right; }
+  #progress { position: absolute; left: 420px; right: 420px; bottom: 64px; height: 3px; background: rgba(255,255,255,.12); border-radius: 3px; overflow: hidden; }
+  #progress i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, var(--mint), var(--pink), var(--purple)); }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 12px var(--mint); margin-right: 12px; vertical-align: 1px; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="overlay"></div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

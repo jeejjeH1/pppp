@@ -39,7 +39,7 @@ async function openPage(browser, port) {
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   page.on('console', (m) => (m.type() === 'error' || m.type() === 'warning') && console.log('[page]', m.text()));
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-  await page.goto(`http://localhost:${port}/src/index.html`);
+  await page.goto(`http://localhost:${port}/${args.page ?? 'src/index.html'}`);
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 120000 });
   return page;
 }
@@ -55,7 +55,7 @@ async function main() {
   const browser = await chromium.launch({
     args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-vsync'],
   });
-  const outDir = path.join(ROOT, 'out');
+  const outDir = path.join(ROOT, args.outdir ?? 'out');
   fs.mkdirSync(outDir, { recursive: true });
 
   if (args.stills) {
