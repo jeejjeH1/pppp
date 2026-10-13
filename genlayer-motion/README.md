@@ -3,7 +3,11 @@
 56-second, 1920×1080, 30 fps motion graphic for an X/Twitter post, built for the post
 *"Why does GenLayer need direct web access, and how could this change the way we think about smart contracts?"*
 
-**Final video:** [`video/genlayer-intelligent-contracts.mp4`](video/genlayer-intelligent-contracts.mp4)
+**Videos:**
+- v1 (mascot, calm): [`video/genlayer-intelligent-contracts.mp4`](video/genlayer-intelligent-contracts.mp4)
+- v2 "Thread of light" (no character, particle-only): [`video/genlayer-thread-of-light.mp4`](video/genlayer-thread-of-light.mp4) — source in `src/v2/`
+
+v2 rebuild: `python3 src/v2/audio.py out/events.json out/v2/soundtrack.wav && node src/render.js --page src/v2/index.html --outdir out/v2`
 
 - 3D mascot (the cat astronaut from `assets/character-reference.jpg`) modelled in Three.js
 - 3D extruded GenLayer logo traced from `assets/logo.png`
