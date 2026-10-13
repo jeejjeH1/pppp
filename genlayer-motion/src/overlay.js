@@ -10,6 +10,7 @@
 // `cueEvents()` exposes the exact same timings so the soundtrack can sync SFX to them.
 
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const eOutCubic = (x) => 1 - Math.pow(1 - x, 3);
 const eOutExpo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x));
 const eOutBack = (x) => {
   const c1 = 1.9;
@@ -44,7 +45,7 @@ export function parse(text) {
   );
 }
 
-const DEFAULTS = { type: { cps: 32 }, scramble: { stagger: 0.028, settle: 0.32 }, chars: { stagger: 0.018 }, slam: { stagger: 0.12 } };
+const DEFAULTS = { soft: { stagger: 0.09 }, type: { cps: 32 }, scramble: { stagger: 0.028, settle: 0.32 }, chars: { stagger: 0.018 }, slam: { stagger: 0.12 } };
 
 /** Timing of every character / word, used by both the DOM animator and the SFX generator. */
 export function cueTiming(c) {
@@ -71,7 +72,7 @@ export function cueTiming(c) {
     else if (anim === 'chars') ch.t = c.in + ch.k * st;
     else ch.t = c.in + ch.w * st;
   }
-  for (const w of words) w.t = c.in + w.i * (c.stagger ?? DEFAULTS.slam.stagger);
+  for (const w of words) w.t = c.in + w.i * (c.stagger ?? DEFAULTS[anim]?.stagger ?? DEFAULTS.slam.stagger);
   return { anim, lines, chars, words };
 }
 
@@ -152,24 +153,34 @@ export class Overlay {
       const outP = clamp((t - c.out) / 0.35);
       const outE = outP * outP;
       el.style.opacity = String(1 - outE);
-      el.style.filter = outE > 0 ? `blur(${outE * 14}px)` : 'none';
-      el.style.translate = `${outE > 0 ? (hash(Math.floor(t * 30)) - 0.5) * 30 * outE : 0}px ${-outE * 40}px`;
+      el.style.filter = outE > 0 ? `blur(${outE * 6}px)` : 'none';
+      el.style.translate = `0 ${-outE * 12}px`;
       const local = t - c.in;
 
       if (c.chips) {
         c.chips.forEach((ch, i) => {
-          const p = clamp((local - i * (c.stagger ?? 0.22)) / 0.45);
-          const e = eOutBack(p);
-          ch.style.opacity = String(clamp(p * 2));
-          ch.style.transform = `translateY(${(1 - e) * 40}px) scale(${0.7 + 0.3 * e})`;
-          ch.style.filter = p > 0 && p < 0.4 ? 'brightness(2.2)' : 'none';
+          const p = clamp((local - i * (c.stagger ?? 0.22)) / 0.9);
+          const e = eOutCubic(p);
+          ch.style.opacity = String(e);
+          ch.style.transform = `translateY(${(1 - e) * 14}px)`;
         });
         continue;
       }
       const anim = c.timing.anim;
 
+      if (anim === 'soft') {
+        c.wordEls.forEach((w, i) => {
+          const p = clamp((local - i * (c.stagger ?? DEFAULTS.soft.stagger)) / 0.9);
+          const e = eOutCubic(p);
+          w.el.style.opacity = String(e);
+          w.el.style.transform = `translateY(${(1 - e) * 18}px)`;
+          w.el.style.filter = p < 1 ? `blur(${(1 - e) * 8}px)` : 'none';
+        });
+        continue;
+      }
+
       if (anim === 'track') {
-        const p = eOutExpo(clamp(local / 1.2));
+        const p = eOutCubic(clamp(local / 1.8));
         el.style.letterSpacing = `${(1 - p) * 0.6 + (c.ls ?? 0)}em`;
         el.style.opacity = String(p * (1 - outE));
         continue;

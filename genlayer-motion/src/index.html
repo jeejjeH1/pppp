@@ -19,30 +19,30 @@
   .w { display: inline-block; vertical-align: top; padding: 0.04em 0.02em 0.14em; margin-bottom: -0.1em; }
   .wi { display: inline-block; transform-origin: 50% 80%; }
   .c { display: inline-block; position: relative; white-space: pre; }
-  .grad .c { text-shadow: 0 0 30px rgba(220,0,255,.45); }
-  .mint .c { color: var(--mint); text-shadow: 0 0 34px rgba(168,255,210,.45); }
+  .grad .c { text-shadow: none; }
+  .mint .c { color: var(--mint); }
   .c.hot { color: #ffffff !important; text-shadow: 0 0 14px #fff, 0 0 30px var(--mint) !important; }
   .c.scr { color: var(--mint) !important; opacity: .8; text-shadow: 0 0 12px rgba(168,255,210,.8); }
   .c.cur::after { content: ''; position: absolute; left: calc(100% + 0.06em); top: 0.12em; bottom: 0.08em; width: 0.42em;
                   background: var(--mint); box-shadow: 0 0 18px var(--mint); }
   .mono .c.cur::after, .kicker .c.cur::after { width: 0.6em; }
-  .h1 { font-weight: 900; font-size: 104px; line-height: 1.02; letter-spacing: -0.035em; text-shadow: 0 6px 40px rgba(0,0,0,.55); }
-  .h2 { font-weight: 800; font-size: 76px; line-height: 1.05; letter-spacing: -0.03em; text-shadow: 0 6px 30px rgba(0,0,0,.6); }
-  .h3 { font-weight: 700; font-size: 58px; line-height: 1.12; letter-spacing: -0.02em; text-shadow: 0 4px 24px rgba(0,0,0,.7); }
-  .body { font-family: 'Inter'; font-weight: 500; font-size: 36px; line-height: 1.35; color: rgba(255,255,255,.82); text-shadow: 0 2px 18px rgba(0,0,0,.8); }
-  .kicker { font-family: 'DejaVu Sans Mono', monospace; font-weight: 700; font-size: 24px; letter-spacing: 0.32em; color: var(--mint); text-transform: uppercase; }
+  .h1 { font-weight: 600; font-size: 90px; line-height: 1.08; letter-spacing: -0.03em; text-shadow: 0 4px 30px rgba(0,0,0,.5); }
+  .h2 { font-weight: 500; font-size: 68px; line-height: 1.1; letter-spacing: -0.025em; text-shadow: 0 4px 26px rgba(0,0,0,.55); }
+  .h3 { font-weight: 400; font-size: 54px; line-height: 1.12; letter-spacing: -0.02em; text-shadow: 0 4px 24px rgba(0,0,0,.7); }
+  .body { font-family: 'Inter'; font-weight: 400; font-size: 34px; line-height: 1.45; color: rgba(255,255,255,.72); text-shadow: 0 2px 18px rgba(0,0,0,.8); }
+  .kicker { font-family: 'DejaVu Sans Mono', monospace; font-weight: 400; font-size: 22px; letter-spacing: 0.4em; color: var(--mint); opacity: .85; text-transform: uppercase; }
   .kicker.pink { color: var(--pink); }
   .mono { font-family: 'DejaVu Sans Mono', monospace; font-size: 28px; color: var(--mint); letter-spacing: 0.06em; }
   .center { left: 0; right: 0; text-align: center; }
-  .num { font-weight: 900; font-size: 250px; line-height: 0.9; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 3px var(--pink); }
-  .num .c { color: transparent !important; text-shadow: 0 0 40px rgba(255,135,255,.35); }
-  .brand { font-weight: 900; font-size: 120px; letter-spacing: 0; }
+  .num { font-weight: 900; font-size: 250px; line-height: 0.9; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1.5px rgba(255,135,255,.7); font-weight: 300; }
+  .num .c { color: transparent !important; }
+  .brand { font-weight: 500; font-size: 108px; letter-spacing: -0.01em; }
 
   .chips { display: flex; gap: 22px; justify-content: center; align-items: center; }
-  .chip { font-family: 'Inter'; font-weight: 800; font-size: 30px; letter-spacing: 0.04em; padding: 18px 34px; border-radius: 999px;
-          border: 2.5px solid var(--pink); background: rgba(220,0,255,.14); box-shadow: 0 0 40px rgba(220,0,255,.35), inset 0 0 22px rgba(255,135,255,.15); }
-  .chip.mint { border-color: var(--mint); background: rgba(168,255,210,.1); color: var(--mint); box-shadow: 0 0 40px rgba(168,255,210,.25); }
-  .chip.op { border: none; background: none; box-shadow: none; font-size: 46px; padding: 0 4px; color: rgba(255,255,255,.7); }
+  .chip { font-family: 'Inter'; font-weight: 500; font-size: 28px; letter-spacing: 0.06em; padding: 16px 32px; border-radius: 999px;
+          border: 1.5px solid rgba(255,135,255,.6); background: rgba(220,0,255,.06); }
+  .chip.mint { border-color: rgba(168,255,210,.6); background: rgba(168,255,210,.05); color: var(--mint); }
+  .chip.op { border: none; background: none; box-shadow: none; font-size: 40px; font-weight: 300; padding: 0 4px; color: rgba(255,255,255,.7); }
 
   /* HUD */
   #hud { opacity: 0; }

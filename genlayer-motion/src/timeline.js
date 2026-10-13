@@ -15,23 +15,8 @@ export const SCENES = [
 ];
 
 // camera shake / chroma / flash hits (k = shake energy, flash = white flash)
-export const IMPACTS = [
-  { t: 2.0, k: 1.2, flash: 0.9 },
-  { t: 4.0, k: 1.3, flash: 0.35 },
-  { t: 10.0, k: 0.5, flash: 0.25 },
-  { t: 12.0, k: 1.0, flash: 0.6 },
-  { t: 16.0, k: 1.0, flash: 0.6 },
-  { t: 22.0, k: 0.6, flash: 0.35 },
-  { t: 25.0, k: 0.5, flash: 0.3 },
-  { t: 28.0, k: 0.5, flash: 0.3 },
-  { t: 31.0, k: 0.8, flash: 0.4 },
-  { t: 34.0, k: 0.6, flash: 0.4 },
-  { t: 37.5, k: 0.9, flash: 0.5 },
-  { t: 40.0, k: 0.6, flash: 0.45 },
-  { t: 43.0, k: 0.8, flash: 0.5 },
-  { t: 46.0, k: 1.4, flash: 1.0 },
-  { t: 50.5, k: 0.4, flash: 0.2 },
-];
+// Calm style: no shake / flash hits.
+export const IMPACTS = [];
 
 const L = (left, top) => ({ left: `${left}px`, top: `${top}px` });
 const chip = (txt, cls = '') => `<span class="chip ${cls}">${txt}</span>`;
@@ -43,7 +28,7 @@ const REASONS = [
   { title: 'Web access|*isn’t* *enough*', desc: 'Content can be incomplete,|contradictory, outdated —|or deliberately misleading.' },
 ];
 
-export const CUES = [
+const RAW_CUES = [
   // ---------- S1 intro
   { text: '> initializing intelligent_contract ...', anim: 'type', cps: 30, in: 0.15, out: 1.85, cls: 'mono center', style: { top: '930px' } },
   { text: 'GenLayer', anim: 'scramble', settle: 0.15, stagger: 0.05, in: 2.05, out: 3.45, cls: 'brand center', style: { top: '820px' } },
@@ -101,6 +86,15 @@ export const CUES = [
 
 // Where the drums play (shared by the soundtrack and the beat-reactive visuals).
 // Gaps right before 16 / 40 / 46 are the "drop" silences.
-export const KICK = [[4, 15.5], [16, 34], [37.5, 39.75], [40, 45.5], [46, 50.5]];
-export const CLAP = [[8, 15.5], [16, 34], [40, 45.5], [46, 50.5]];
-export const DROPS = [16, 40, 46];
+// Minimal / calm cut: no drum-driven visuals, no drop gaps.
+export const KICK = [];
+export const CLAP = [];
+export const DROPS = [];
+
+// Calm style: every text block fades in softly word by word (letter-spacing reveals stay).
+export const CUES = RAW_CUES.map(({ cps, settle, ...c }) => ({
+  ...c,
+  anim: c.anim === 'track' ? 'track' : 'soft',
+  // whole block revealed within ~0.9 s so long lines still have reading time
+  stagger: c.html ? 0.3 : Math.min(0.09, 0.9 / c.text.split(/[ |]+/).length),
+}));

@@ -150,7 +150,7 @@ scene.add(floor);
         float d = length(gl_PointCoord - 0.5);
         float a = smoothstep(0.5, 0.0, d);
         vec3 col = vS < 0.33 ? vec3(0.66,1.0,0.82) : (vS < 0.7 ? vec3(1.0,0.53,1.0) : vec3(0.86,0.0,1.0));
-        gl_FragColor = vec4(col * 1.4, a * 0.55);
+        gl_FragColor = vec4(col * 1.1, a * 0.3);
       }`,
   });
   const dust = new THREE.Points(g, dustMat);
@@ -185,7 +185,7 @@ function ringAt(ring, t, t0, dur, maxS, { pos = [0, 0, 0], rotX = 0 } = {}) {
   ring.rotation.set(rotX, 0, 0);
   const s = 0.2 + eOutExpo(p) * maxS;
   ring.scale.set(s, s, s);
-  ring.material.opacity = (1 - p) * (1 - p);
+  ring.material.opacity = (1 - p) * (1 - p) * 0.22;
 }
 
 // ---------------------------------------------------------------- hero objects
@@ -431,7 +431,7 @@ const fx = new ShaderPass({
       col.b = texture2D(tDiffuse, uv - dir * a).b;
       float vig = smoothstep(1.15, 0.35, length((vUv - 0.5) * vec2(1.6, 1.15)));
       col *= mix(0.55, 1.0, vig);
-      col += (h(vUv * 1000.0 + uTime) - 0.5) * 0.035;
+      col += (h(vUv * 1000.0 + uTime) - 0.5) * 0.018;
       col = mix(col, uFlashCol, clamp(uFlash, 0.0, 1.0));
       gl_FragColor = vec4(col * uFade, 1.0);
     }`,
@@ -498,7 +498,7 @@ function clapEnv(t) {
   return inSec(CLAP, b) && n % 2 === 1 ? Math.exp(-(t - b) * 12) : 0;
 }
 // silence right before each drop: screen sinks, then the drop hits
-const dropGap = (t) => Math.max(...DROPS.map((d) => (t >= d - 0.5 && t < d ? eInExpo(lin(t, d - 0.5, d)) : 0)));
+const dropGap = (t) => Math.max(0, ...DROPS.map((d) => (t >= d - 0.5 && t < d ? eInExpo(lin(t, d - 0.5, d)) : 0)));
 
 const sceneIdx = (t) => SCENES.findIndex((s) => t >= s.start && t < s.end);
 
@@ -549,9 +549,8 @@ function renderAt(t) {
   // ================================================================== S2 HOOK [4,10]
   if (S.id === 'hook') {
     const land = 4.0;
-    const drop = clamp((t - (land - 0.45)) / 0.45);
-    const y = t < land ? mix(9, 0, drop * drop) : 0;
-    const sq = t >= land ? Math.exp(-(t - land) * 6) * Math.cos((t - land) * 22) * 0.22 : -0.12 * drop;
+    const y = mix(1.2, 0, eOutCubic(lin(t, 3.9, 5.2)));
+    const sq = 0;
     placeHero(hero, 3.75, y, 0, -0.42 + Math.sin(t * 0.8) * 0.06);
     let face = 'angry';
     if (t > 7.4) face = 'think';
@@ -717,13 +716,13 @@ function renderAt(t) {
         const gy = [2.6, 3.3, 2.2, 0.8][i];
         cardAt(c, t, T0 + i * 0.15, T0 + 3, gx, gy, -1.4 - (i % 2) * 0.6, (i - 1.5) * 0.15, (hash(i) - 0.5) * 0.15);
         if (c.visible) {
-          const gl = Math.floor(t * 18 + i * 3) % 7 === 0 ? 1 : 0;
+          const gl = 0;
           c.position.x += gl * (hash(Math.floor(t * 30) + i) - 0.5) * 0.4;
           c.position.y += gl * (hash(Math.floor(t * 30) + i + 9) - 0.5) * 0.2;
         }
       });
       placeHero(hero, 3.3, 0, 1.4, -0.2, 0.72);
-      hero.pose(t, { face: Math.floor(t * 2) % 2 ? 'crossRed' : 'wide', tilt: Math.sin(t * 3) * 0.12 });
+      hero.pose(t, { face: 'think', tilt: 0.12 });
     }
   }
 
@@ -815,7 +814,7 @@ function renderAt(t) {
     logoGlow.material.opacity = 0.65 * k;
     const hk = eOutBack(lin(t, 46.2, 46.9), 1.4);
     placeHero(hero, 0, 0, 0.6, Math.sin(t * 0.5) * 0.1, Math.max(0.001, hk));
-    hero.pose(t, { face: t > 50.6 ? 'happy' : 'angry', wave: t > 50.6 && t < 52.5 ? 1 : 0, lookY: 0.05 });
+    hero.pose(t, { face: t > 50.6 ? 'happy' : 'angry', lookY: 0.05 });
     floorMat.uniforms.uPulse.value = Math.exp(-Math.max(0, t - 46) * 1.6);
     floorMat.uniforms.uPulseR.value = Math.max(0, t - 46) * 9;
     ringAt(rings[0], t, 46.0, 1.4, 12, { pos: [0, 2.3, -3.4] });
@@ -847,20 +846,22 @@ function renderAt(t) {
   dustMat.uniforms.uWarp.value = 0;
   floorMat.uniforms.uTime.value = t;
   fx.uniforms.uTime.value = t;
-  const glitch = S.id === 'reasons' && t > 31 && t < 34 ? (Math.floor(t * 18) % 7 === 0 ? 1 : 0.15) : 0;
+  const glitch = 0;
   fx.uniforms.uGlitch.value = glitch + Math.min(impact, 1) * 0.25;
-  fx.uniforms.uAberr.value = 0.0025 + Math.min(impact, 1.5) * 0.012 + glitch * 0.01 + kk * 0.0025 + gap * 0.01;
+  fx.uniforms.uAberr.value = 0.0008 + 0 * Math.min(impact, 1.5) * 0.012 + glitch * 0.01 + kk * 0.0025 + gap * 0.01;
   fx.uniforms.uFlash.value = Math.min(flash, 1) * 0.85;
   fx.uniforms.uFade.value = Math.min(lin(t, 0, 0.35), 1 - lin(t, DURATION - 0.8, DURATION)) * (1 - gap * 0.55);
   fx.uniforms.uGlitch.value += gap * 0.6;
-  bloom.strength = 0.9 + Math.min(impact, 1) * 0.6 + kk * 0.35 + cl * 0.15;
+  bloom.strength = 0.65;
 
+  floorMat.uniforms.uOpacity.value *= 0.3;
+  floorMat.uniforms.uPulse.value *= 0.3;
   composer.render();
 
   // overlay + HUD
   overlay.update(t);
   document.getElementById('overlay').style.transform = `scale(${1 + kk * 0.006 - gap * 0.02})`;
-  hud.style.opacity = String(env(t, 4.2, DURATION - 0.6, 0.6, 0.6) * 0.9);
+  hud.style.opacity = '0';
   hudScene.textContent = String(Math.max(1, si + 1)).padStart(2, '0');
   const f = Math.floor((t % 1) * 30);
   hudTc.textContent = `00:${String(Math.floor(t)).padStart(2, '0')}:${String(f).padStart(2, '0')}`;
