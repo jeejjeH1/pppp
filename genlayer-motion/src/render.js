@@ -127,7 +127,7 @@ async function main() {
   const audio = path.join(outDir, 'soundtrack.wav');
   const final = path.join(outDir, args.out ?? 'genlayer.mp4');
   const ffArgs = ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list];
-  if (fs.existsSync(audio) && from === 0) ffArgs.push('-i', audio, '-c:a', 'aac', '-b:a', '256k', '-shortest');
+  if (fs.existsSync(audio) && from === 0 && !args.noaudio) ffArgs.push('-i', audio, '-c:a', 'aac', '-b:a', '256k', '-shortest');
   ffArgs.push('-c:v', 'copy', '-movflags', '+faststart', final);
   await new Promise((r) => spawn('ffmpeg', ffArgs, { stdio: 'inherit' }).on('close', r));
   for (const s of segs.filter(Boolean)) fs.unlinkSync(s);
