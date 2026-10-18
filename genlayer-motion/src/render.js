@@ -19,7 +19,7 @@ const FPS = Number(args.fps ?? 60);
 const W = 1920;
 const H = 1080;
 
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json' };
+const MIME = { '.ttf': 'font/ttf', '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json' };
 function serve() {
   return new Promise((res) => {
     const srv = http.createServer((req, resp) => {
@@ -57,6 +57,15 @@ async function main() {
   });
   const outDir = path.join(ROOT, args.outdir ?? 'out');
   fs.mkdirSync(outDir, { recursive: true });
+
+  if (args.sfx) {
+    const page = await openPage(browser, port);
+    fs.writeFileSync(path.join(ROOT, args.sfx), JSON.stringify(await page.evaluate(() => window.SFX ?? []), null, 1));
+    console.log('wrote', args.sfx);
+    await browser.close();
+    srv.close();
+    return;
+  }
 
   if (args.stills) {
     fs.mkdirSync(path.join(outDir, 'stills'), { recursive: true });

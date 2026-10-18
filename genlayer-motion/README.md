@@ -4,6 +4,7 @@
 *"Why does GenLayer need direct web access, and how could this change the way we think about smart contracts?"*
 
 **Videos:**
+- **v3 "Adjudication" (narrated, genlayer.com theme, 2:15):** [`video/genlayer-v3-narrated.mp4`](video/genlayer-v3-narrated.mp4) — source in `src/v3/`
 - v1 (mascot, calm): [`video/genlayer-intelligent-contracts.mp4`](video/genlayer-intelligent-contracts.mp4)
 - v2 "Thread of light" (no character, particle-only): [`video/genlayer-thread-of-light.mp4`](video/genlayer-thread-of-light.mp4) — source in `src/v2/`
 
@@ -40,3 +41,24 @@ node src/render.js --stills 5,20,48            # preview frames -> out/stills/
 
 Rendering runs headless Chromium (Playwright) and drives `window.renderAt(t)` frame by frame, so
 the output is deterministic. Edit text and timing in `src/timeline.js`.
+
+## v3 — narrated cinematic cut (genlayer.com theme)
+
+1920×1080, 30 fps, 134.9 s (under X's 2:20 limit), with a male AI voiceover, burned-in karaoke subtitles,
+cinematic score and synced SFX. White / black / electric blue `#1a0dff` / consensus green, Inter Tight + Geist Mono,
+the site's isometric protocol stack in 3D, halftone statues, consensus wheel and the 5 → 11 → 23 appeal flow.
+
+```bash
+pip install kokoro-onnx scipy           # TTS + DSP
+# Kokoro-82M ONNX model + voices in /root/tts (model.onnx, voices.npz) — see src/v3/tts.py
+python3 src/v3/tts.py out/v3                                          # voice.wav + timeline.json (word timings)
+node src/render.js --page src/v3/index.html --outdir out/v3 --sfx out/v3/sfx.json   # SFX cue list from the page
+python3 src/v3/audio.py out/v3                                        # score + SFX + voice -> soundtrack.wav
+node src/render.js --page src/v3/index.html --outdir out/v3 --fps 30 --workers 3 --out genlayer-v3.mp4
+```
+
+Narration text and pauses live in `src/v3/narration.json`; every scene is pinned to word onsets, so editing the
+script re-times the whole film. Storyboard: intro lockup → rigid rules shatter → prices / news / announcements →
+the problem → GenLayer stack rises + Intelligent Contract code → three use cases → raw data vs. interpret / evaluate /
+decide → web + AI + Optimistic Democracy (consensus wheel, appeals to finality) → outdated / misleading / manipulated
+sources rejected by validators → hammer statue "beyond executing code" → new possibilities → end card.

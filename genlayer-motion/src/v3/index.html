@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>GenLayer — Intelligent Contracts (v3)</title>
+<script type="importmap">
+{ "imports": {
+  "three": "/node_modules/three/build/three.module.js",
+  "three/addons/": "/node_modules/three/examples/jsm/"
+} }
+</script>
+<style>
+  @font-face { font-family: 'Inter Tight'; font-weight: 500; src: url(/assets/fonts/InterTight-500.ttf); }
+  @font-face { font-family: 'Inter Tight'; font-weight: 600; src: url(/assets/fonts/InterTight-600.ttf); }
+  @font-face { font-family: 'Inter Tight'; font-weight: 700; src: url(/assets/fonts/InterTight-700.ttf); }
+  @font-face { font-family: 'Geist Mono'; font-weight: 400; src: url(/assets/fonts/GeistMono-400.ttf); }
+  @font-face { font-family: 'Geist Mono'; font-weight: 500; src: url(/assets/fonts/GeistMono-500.ttf); }
+  :root { --blue: #1a0dff; --green: #00f26b; --red: #ff3b30; --ink: #0a0a0a; --panel: #f4f4f4; --gray: #8d8d8d; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+  * { box-sizing: border-box; }
+  #root { position: absolute; inset: 0; overflow: hidden; background: #000; }
+  #bg { position: absolute; inset: 0; }
+  #gl { position: absolute; inset: 0; width: 1920px; height: 1080px; pointer-events: none; }
+  .scene { position: absolute; inset: 0; display: none; overflow: hidden; transform-origin: 50% 50%; }
+  .layer { position: absolute; inset: 0; }
+  .cv { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+  .abs { position: absolute; }
+  .ch { display: inline-block; white-space: pre; will-change: transform, opacity, filter; }
+  .wd { display: inline-block; white-space: nowrap; }
+  .sp { display: inline-block; width: 0.26em; }
+  .hl .ch { color: var(--blue); }
+  .dark .hl .ch { color: #5a50ff; }
+  .hl2 .ch { color: var(--green); }
+  .hl3 .ch { color: var(--red); }
+  .ch.scr { color: var(--blue); }
+  .dark .ch.scr { color: #7a72ff; }
+
+  .h0 { font-family: 'Inter Tight'; font-weight: 600; font-size: 168px; line-height: 0.95; letter-spacing: -0.045em; }
+  .h1 { font-family: 'Inter Tight'; font-weight: 600; font-size: 112px; line-height: 1.0; letter-spacing: -0.04em; }
+  .h2 { font-family: 'Inter Tight'; font-weight: 600; font-size: 84px; line-height: 1.04; letter-spacing: -0.035em; }
+  .h3 { font-family: 'Inter Tight'; font-weight: 600; font-size: 58px; line-height: 1.08; letter-spacing: -0.03em; }
+  .body { font-family: 'Inter Tight'; font-weight: 500; font-size: 32px; line-height: 1.35; color: var(--gray); letter-spacing: -0.005em; }
+  .mono { font-family: 'Geist Mono'; font-weight: 400; font-size: 24px; letter-spacing: 0.22em; text-transform: uppercase; }
+  .idx { font-family: 'Geist Mono'; font-weight: 400; font-size: 34px; color: var(--blue); letter-spacing: 0.05em; }
+  .ink { color: var(--ink); }
+  .white { color: #fff; }
+  .card { position: absolute; background: var(--panel); border-radius: 28px; overflow: hidden; }
+  .card.dk { background: #0b0b0b; }
+  .chip { position: absolute; font-family: 'Geist Mono'; font-size: 30px; letter-spacing: 0.18em; text-transform: uppercase; padding: 26px 40px;
+          border: 2px dashed #9a9a9a; border-radius: 22px; white-space: nowrap; color: var(--ink); background: rgba(244,244,244,.92); }
+  .chip.solid { background: var(--blue); color: #fff; border: 2px solid var(--blue); }
+  .chip.dk { background: rgba(255,255,255,.04); color: #fff; border-color: rgba(255,255,255,.35); }
+  .pill { position: absolute; font-family: 'Inter Tight'; font-weight: 500; font-size: 34px; padding: 14px 30px; border: 2px solid var(--blue); border-radius: 999px; color: var(--ink); background: #fff; white-space: nowrap; }
+  .pill .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--blue); margin-right: 14px; vertical-align: 6px; }
+  .stamp { position: absolute; font-family: 'Geist Mono'; font-weight: 500; font-size: 34px; letter-spacing: 0.16em; padding: 14px 26px; border: 3px solid currentColor; border-radius: 12px; white-space: nowrap; }
+
+  /* subtitles */
+  #subs { position: absolute; left: 0; right: 0; bottom: 46px; text-align: center; pointer-events: none; }
+  #subs .box { display: inline-block; max-width: 1500px; padding: 14px 30px 16px; border-radius: 16px; background: rgba(10,10,12,.62);
+               font-family: 'Inter Tight'; font-weight: 500; font-size: 36px; line-height: 1.25; letter-spacing: -0.005em; color: #fff; }
+  #subs .sw { opacity: .38; }
+  #subs .sw.on { opacity: 1; }
+  #subs .sw.now { color: #b9b4ff; }
+
+  /* post */
+  #flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+  #grain { position: absolute; inset: -64px; pointer-events: none; opacity: .07; mix-blend-mode: overlay; }
+  #vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%); opacity: 0; }
+  #bars i { position: absolute; left: 0; right: 0; height: 0; background: #000; }
+  #bars i:first-child { top: 0; } #bars i:last-child { bottom: 0; }
+  #flare { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; mix-blend-mode: screen; }
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="bg"></div>
+  <div id="scenes"></div>
+  <canvas id="flare" width="1920" height="1080"></canvas>
+  <div id="vig"></div>
+  <div id="grain"></div>
+  <div id="flash"></div>
+  <div id="bars"><i></i><i></i></div>
+  <div id="subs"></div>
+</div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
