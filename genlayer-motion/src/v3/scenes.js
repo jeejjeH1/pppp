@@ -802,7 +802,7 @@ export function buildScenes(ctx, DURATION) {
           css(cards[1].scan, { left: '0', width: '670px', height: '4px', background: BLUE, boxShadow: `0 0 30px 6px rgba(26,13,255,.45)` });
           cards[1].ev = ['Photos', 'Weather data', 'Police report'].map((tx, i) => {
             const c = el('div', 'abs mono', v, `✓ ${tx}`);
-            css(c, { left: `${40 + i * 205}px`, top: '420px', fontSize: '17px', padding: '12px 14px', border: '2px solid #00c957', borderRadius: '10px', color: '#00994a', whiteSpace: 'nowrap' });
+            css(c, { left: `${40 + i * 200}px`, top: '420px', fontSize: '15px', letterSpacing: '.1em', padding: '12px 12px', border: '2px solid #00c957', borderRadius: '10px', color: '#00994a', whiteSpace: 'nowrap' });
             return c;
           });
           cards[1].stamp = el('div', 'stamp', v, 'Claim valid · Payout');
