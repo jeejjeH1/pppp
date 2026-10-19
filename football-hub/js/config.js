@@ -1,22 +1,28 @@
-// Data comes from SofaScore through the /api/sofa proxy (api/sofa.js).
+// Data comes from ESPN's public API (no key). The /api/espn proxy is only a fallback.
 window.CONFIG = {
-  PROXY: '/api/sofa?path=',
-  MADRID_ID: 2829,
-  LALIGA_ID: 8,
-  // SofaScore unique-tournament ids, shown first on the home page and in the sidebar.
+  PROXY: '/api/espn?url=',
+  MADRID_ID: '86',
+  LALIGA: 'esp.1',
+  // Competitions Madrid plays in, merged for its full-season schedule.
+  MADRID_LEAGUES: ['esp.1', 'uefa.champions', 'esp.copa_del_rey', 'esp.super_cup', 'fifa.cwc'],
+  // ESPN league slugs, shown first on the home page and in the sidebar.
   LEAGUES: [
-    { id: 7, name: 'لیگ قهرمانان اروپا' },
-    { id: 17, name: 'لیگ برتر انگلیس' },
-    { id: 8, name: 'لالیگا' },
-    { id: 23, name: 'سری آ' },
-    { id: 35, name: 'بوندسلیگا' },
-    { id: 34, name: 'لوشامپیونه' },
-    { id: 679, name: 'لیگ اروپا' },
-    { id: 17015, name: 'لیگ کنفرانس' },
-    { id: 329, name: 'کوپا دل ری' },
-    { id: 213, name: 'سوپرکاپ اسپانیا' },
-    { id: 16, name: 'جام جهانی' },
-    { id: 1, name: 'یورو' },
-    { id: 955, name: 'لیگ عربستان' },
+    { id: 'uefa.champions', name: 'لیگ قهرمانان اروپا' },
+    { id: 'eng.1', name: 'لیگ برتر انگلیس' },
+    { id: 'esp.1', name: 'لالیگا' },
+    { id: 'ita.1', name: 'سری آ' },
+    { id: 'ger.1', name: 'بوندسلیگا' },
+    { id: 'fra.1', name: 'لوشامپیونه' },
+    { id: 'uefa.europa', name: 'لیگ اروپا' },
+    { id: 'uefa.europa.conf', name: 'لیگ کنفرانس' },
+    { id: 'esp.copa_del_rey', name: 'کوپا دل ری' },
+    { id: 'esp.super_cup', name: 'سوپرکاپ اسپانیا' },
+    { id: 'eng.fa', name: 'جام حذفی انگلیس' },
+    { id: 'por.1', name: 'لیگ پرتغال' },
+    { id: 'ned.1', name: 'اردیویسی هلند' },
+    { id: 'ksa.1', name: 'لیگ عربستان' },
+    { id: 'fifa.world', name: 'جام جهانی' },
+    { id: 'uefa.euro', name: 'یورو' },
+    { id: 'uefa.nations', name: 'لیگ ملت‌های اروپا' },
   ],
 };

@@ -502,3 +502,24 @@ body.madrid .countdown b { color: var(--gold); text-shadow: 0 0 14px rgba(254,19
 .rm-section h2::before { content: ''; width: 6px; height: 22px; border-radius: 3px; background: var(--gold); }
 .rp small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 @media (max-width: 680px) { .kv-grid { grid-template-columns: 1fr; } .kv-grid .kv:nth-child(odd) { border-left: 0; } }
+
+/* ---------- ESPN additions ---------- */
+.week-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.week-nav .btn { padding: 8px 14px; }
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.news-card { display: flex; flex-direction: column; margin: 0; transition: .2s; }
+.news-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+.news-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; max-width: 100%; }
+.news-body { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px 14px; }
+.news-body b { line-height: 1.5; }
+.news-date { margin-top: auto; }
+.commentary { max-height: 70vh; overflow-y: auto; }
+.cm-row { display: grid; grid-template-columns: 56px 1fr; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.cm-row b { color: var(--accent); text-align: center; }
+.form-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 4px 10px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.form-row:hover { background: var(--card2); }
+.form-row small { grid-column: 2 / -1; }
+.form-row i { font-style: normal; }
+.pp-marks { position: absolute; top: -8px; right: -14px; font-size: 11px; white-space: nowrap; }
+.sub-row .in { color: var(--win); }
+.rank.zoned { font-weight: 800; }

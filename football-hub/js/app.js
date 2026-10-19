@@ -3,9 +3,9 @@ const App = (() => {
   const routes = [
     [/^\/?$/, Views.home, 'home'],
     [/^\/leagues$/, Views.leagues, 'leagues'],
-    [/^\/league\/(?<id>\d+)$/, Views.league, 'leagues'],
-    [/^\/match\/(?<id>\d+)$/, Views.match, ''],
-    [/^\/team\/(?<id>\d+)$/, Views.team, ''],
+    [/^\/league\/(?<id>[\w.]+)$/, Views.league, 'leagues'],
+    [/^\/match\/(?<league>[\w.]+)\/(?<id>\d+)$/, Views.match, ''],
+    [/^\/team\/(?<league>[\w.]+)\/(?<id>\d+)$/, Views.team, ''],
     [/^\/player\/(?<id>\d+)$/, Views.player, ''],
     [/^\/madrid$/, MadridViews.hub, 'madrid'],
     [/^\/search$/, Views.search, 'search'],
@@ -52,15 +52,15 @@ const App = (() => {
     const dlg = document.getElementById('settings');
     document.getElementById('settingsBtn').addEventListener('click', async () => {
       const q = document.getElementById('quota');
-      q.textContent = 'در حال بررسی اتصال به SofaScore…';
+      q.textContent = 'در حال بررسی اتصال به ESPN…';
       dlg.showModal();
       try {
         const t = performance.now();
-        const live = await API.live();
+        const live = await API.live(CONFIG.LEAGUES.map(l => l.id));
         q.innerHTML = `✅ اتصال برقرار است (${API.mode() === 'direct' ? 'مستقیم از مرورگر' : 'از طریق سرور واسط'}) · ${fa(live.length)} بازی زنده · ${fa(Math.round(performance.now() - t))} میلی‌ثانیه`;
       } catch (e) { q.innerHTML = `❌ اتصال برقرار نشد: <span dir="ltr">${esc(e.message)}</span>`; }
     });
-    document.getElementById('clearCache').addEventListener('click', () => { API.clearCache(); try { sessionStorage.removeItem('gb:mode'); } catch {} location.reload(); });
+    document.getElementById('clearCache').addEventListener('click', () => { API.clearCache(); try { sessionStorage.removeItem('gb:espn-mode'); } catch {} location.reload(); });
   }
 
   sidebar();

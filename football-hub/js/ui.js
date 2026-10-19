@@ -1,4 +1,4 @@
-// Shared formatting helpers and small HTML components (SofaScore data shapes).
+// Shared formatting helpers and small HTML components (ESPN data, normalised in api.js).
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fa = (v) => String(v ?? '').replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
 const num = (v, dflt = '-') => (v === null || v === undefined || v === '') ? dflt : fa(v);
@@ -13,67 +13,52 @@ const fmt = {
   iso: (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
 };
 
-const RM_ID = () => CONFIG.MADRID_ID;
-const isLive = (e) => e.status?.type === 'inprogress';
-const isDone = (e) => e.status?.type === 'finished';
-const isUpcoming = (e) => e.status?.type === 'notstarted';
-const isOff = (e) => ['postponed', 'canceled', 'interrupted', 'suspended'].includes(e.status?.type);
-const hasMadrid = (e) => e.homeTeam?.id === RM_ID() || e.awayTeam?.id === RM_ID();
-const tourId = (e) => e.tournament?.uniqueTournament?.id || e.tournament?.id;
-const tourName = (e) => e.tournament?.uniqueTournament?.name || e.tournament?.name || '';
+// Events are normalised by API.normEvent: { id, league, ts, status:{state,detail,clock}, home, away, ... }.
+const isLive = (e) => e.status.state === 'in';
+const isDone = (e) => e.status.state === 'post';
+const isUpcoming = (e) => e.status.state === 'pre';
+const isOff = (e) => e.status.state === 'off';
+const hasMadrid = (e) => e.home.id === CONFIG.MADRID_ID || e.away.id === CONFIG.MADRID_ID;
 
 // Home goals sit on the right in RTL, next to the home team.
 const scoreHtml = (h, a) => `<span class="sc"><i>${num(h)}</i><i>-</i><i>${num(a)}</i></span>`;
-const scoreOf = (e) => scoreHtml(e.homeScore?.current ?? e.homeScore?.display, e.awayScore?.current ?? e.awayScore?.display);
+const scoreOf = (e) => scoreHtml(e.home.score, e.away.score);
 
-function liveMinute(e) {
-  const code = e.status?.code;
-  if (code === 31) return 'نیمه';
-  if (code === 32 || code === 33) return 'استراحت';
-  if (code === 34) return 'پنالتی';
-  const start = e.time?.currentPeriodStartTimestamp;
-  if (!start) return 'زنده';
-  const base = { 6: 0, 7: 45, 41: 90, 42: 105 }[code] ?? 0;
-  const cap = { 6: 45, 7: 90, 41: 105, 42: 120 }[code] ?? 999;
-  const m = Math.floor((Date.now() / 1000 - start) / 60) + 1 + base;
-  return m > cap ? `${fa(cap)}+'` : `${fa(m)}'`;
-}
-
-const STATUS_FA = { finished: 'پایان', postponed: 'تعویق', canceled: 'لغو', interrupted: 'متوقف', suspended: 'توقف' };
+const DETAIL_FA = { FT: 'پایان', HT: 'نیمه', 'AET': 'وقت اضافه', 'FT-Pens': 'پنالتی', Postponed: 'تعویق', Canceled: 'لغو', Abandoned: 'نیمه‌کاره', Suspended: 'توقف', 'Final': 'پایان', 'Halftime': 'نیمه' };
 function statusLabel(e) {
-  if (isLive(e)) return `<span class="live-min">${liveMinute(e)}</span>`;
-  if (isUpcoming(e)) return fmt.time(e.startTimestamp);
-  if (isDone(e)) return { AET: 'وقت اضافه', AP: 'پنالتی' }[e.status.description] || (e.status.code === 110 ? 'وقت اضافه' : e.status.code === 120 ? 'پنالتی' : 'پایان');
-  return STATUS_FA[e.status?.type] || esc(e.status?.description || '');
+  if (isLive(e)) {
+    const d = e.status.detail;
+    return `<span class="live-min">${DETAIL_FA[d] || fa(e.status.clock || d || 'زنده')}</span>`;
+  }
+  if (isUpcoming(e)) return fmt.time(e.ts);
+  return DETAIL_FA[e.status.detail] || DETAIL_FA[e.status.desc] || (isDone(e) ? 'پایان' : esc(e.status.detail));
 }
 
-const POS_FA = { G: 'دروازه‌بان', D: 'مدافع', M: 'هافبک', F: 'مهاجم', Goalkeeper: 'دروازه‌بان', Defender: 'مدافع', Midfielder: 'هافبک', Forward: 'مهاجم' };
+const POS_FA = { G: 'دروازه‌بان', GK: 'دروازه‌بان', D: 'مدافع', M: 'هافبک', F: 'مهاجم', Goalkeeper: 'دروازه‌بان', Defender: 'مدافع', Midfielder: 'هافبک', Forward: 'مهاجم',
+  'Center Back': 'مدافع میانی', 'Left Back': 'دفاع چپ', 'Right Back': 'دفاع راست', 'Defensive Midfielder': 'هافبک دفاعی', 'Attacking Midfielder': 'هافبک هجومی',
+  'Center Forward': 'مهاجم نوک', 'Left Wing': 'وینگر چپ', 'Right Wing': 'وینگر راست', 'Center Midfielder': 'هافبک میانی', Striker: 'مهاجم' };
+const posFa = (p) => POS_FA[p?.displayName] || POS_FA[p?.name] || POS_FA[p?.abbreviation] || esc(p?.displayName || p?.name || p?.abbreviation || '');
 
+// ESPN team statistic names → Persian labels (unknown names fall back to ESPN's own label).
 const STAT_FA = {
-  'Ball possession': 'مالکیت توپ', 'Expected goals': 'گل مورد انتظار (xG)', 'Big chances': 'موقعیت خطرناک', 'Total shots': 'کل شوت‌ها',
-  'Shots on target': 'شوت در چارچوب', 'Shots off target': 'شوت خارج چارچوب', 'Blocked shots': 'شوت مهارشده', 'Corner kicks': 'کرنر',
-  'Fouls': 'خطا', 'Offsides': 'آفساید', 'Yellow cards': 'کارت زرد', 'Red cards': 'کارت قرمز', 'Goalkeeper saves': 'سیو دروازه‌بان',
-  'Passes': 'پاس‌ها', 'Accurate passes': 'پاس دقیق', 'Tackles': 'تکل', 'Free kicks': 'ضربه آزاد', 'Throw-ins': 'پرتاب اوت',
-  'Shots inside box': 'شوت از داخل محوطه', 'Shots outside box': 'شوت از بیرون محوطه', 'Hit woodwork': 'برخورد به تیرک',
-  'Big chances scored': 'موقعیت گل‌شده', 'Big chances missed': 'موقعیت از دست‌رفته', 'Through balls': 'پاس در عمق', 'Touches in penalty area': 'لمس در محوطه',
-  'Long balls': 'پاس بلند', 'Crosses': 'سانتر', 'Dribbles': 'دریبل', 'Duels': 'دوئل', 'Ground duels': 'دوئل زمینی', 'Aerial duels': 'دوئل هوایی',
-  'Interceptions': 'توپ‌ربایی', 'Clearances': 'دفع توپ', 'Recoveries': 'بازپس‌گیری', 'Errors lead to a shot': 'خطای منجر به شوت',
-  'Final third entries': 'ورود به یک‌سوم پایانی', 'Fouled in final third': 'خطا روی بازیکن در یک‌سوم پایانی', 'Dispossessed': 'از دست دادن توپ',
-  'Total saves': 'کل سیوها', 'Goals prevented': 'گل جلوگیری‌شده', 'Goal kicks': 'ضربه دروازه', 'High claims': 'گرفتن توپ هوایی', 'Punches': 'مشت‌زدن',
-  'Expected assists': 'پاس گل مورد انتظار', 'Penalty saves': 'مهار پنالتی', 'Errors lead to a goal': 'خطای منجر به گل',
+  possessionPct: 'مالکیت توپ', totalShots: 'کل شوت‌ها', shotsOnTarget: 'شوت در چارچوب', shotPct: 'دقت شوت', wonCorners: 'کرنر', foulsCommitted: 'خطا',
+  offsides: 'آفساید', yellowCards: 'کارت زرد', redCards: 'کارت قرمز', saves: 'سیو', totalPasses: 'کل پاس‌ها', accuratePasses: 'پاس دقیق', passPct: 'دقت پاس',
+  totalCrosses: 'سانتر', accurateCrosses: 'سانتر دقیق', crossPct: 'دقت سانتر', totalLongBalls: 'پاس بلند', accurateLongBalls: 'پاس بلند دقیق', longballPct: 'دقت پاس بلند',
+  blockedShots: 'شوت مهارشده', effectiveTackles: 'تکل موفق', totalTackles: 'تکل', tacklePct: 'درصد تکل موفق', interceptions: 'توپ‌ربایی',
+  effectiveClearance: 'دفع موفق', totalClearance: 'دفع توپ', penaltyKickGoals: 'گل پنالتی', penaltyKickShots: 'پنالتی', expectedGoals: 'گل مورد انتظار (xG)',
+  goalAssists: 'پاس گل', totalGoals: 'گل', goalsConceded: 'گل خورده', shotsFaced: 'شوت دریافتی', foulsSuffered: 'خطا روی بازیکن',
+  appearances: 'بازی', subIns: 'تعویضی', ownGoals: 'گل به خودی', cleanSheet: 'کلین‌شیت', minutes: 'دقیقه',
 };
-const GROUP_FA = { 'Match overview': 'نمای کلی', Shots: 'شوت‌ها', Attack: 'حمله', Passes: 'پاس‌ها', Duels: 'دوئل‌ها', Defending: 'دفاع', Goalkeeping: 'دروازه‌بانی' };
+const statLabel = (s) => STAT_FA[s.name] || esc(s.label || s.displayName || s.shortDisplayName || s.name);
 
-// Images load straight from SofaScore's CDN; on failure retry once through the proxy, then hide.
-function imgFallback(el) {
-  const m = el.src.match(/img\.sofascore\.com\/api\/v1\/(.+)$/);
-  if (m && !el.dataset.retried) { el.dataset.retried = '1'; el.src = CONFIG.PROXY + encodeURIComponent(m[1]); }
-  else el.style.visibility = 'hidden';
-}
-const img = (src, cls = '', alt = '') => src ? `<img class="${cls}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" referrerpolicy="no-referrer" onerror="imgFallback(this)">` : `<span class="${cls} img-ph"></span>`;
-const teamLogo = (id) => API.image('team', id);
-const playerPhoto = (id) => API.image('player', id);
-const leagueLogo = (id) => API.image('unique-tournament', id);
+const img = (src, cls = '', alt = '') => src ? `<img class="${cls}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" onerror="this.style.visibility='hidden'">` : `<span class="${cls} img-ph"></span>`;
+const teamLogo = (id) => `https://a.espncdn.com/i/teamlogos/soccer/500/${id}.png`;
+const playerPhoto = (id) => `https://a.espncdn.com/i/headshots/soccer/players/full/${id}.png`;
+// ESPN league logos are keyed by numeric league id.
+const LEAGUE_NUM = { 'esp.1': 15, 'eng.1': 23, 'ita.1': 12, 'ger.1': 10, 'fra.1': 9, 'uefa.champions': 2, 'uefa.europa': 2310, 'uefa.europa.conf': 20296,
+  'esp.copa_del_rey': 80, 'por.1': 14, 'ned.1': 11, 'fifa.world': 4, 'uefa.euro': 74, 'eng.fa': 40, 'uefa.nations': 2395, 'esp.super_cup': 431, 'ksa.1': 2488, 'fifa.cwc': 1932 };
+const leagueLogo = (slug) => LEAGUE_NUM[slug] ? `https://a.espncdn.com/i/leaguelogos/soccer/500/${LEAGUE_NUM[slug]}.png` : '';
+const leagueName = (slug, fallback = '') => CONFIG.LEAGUES.find(l => l.id === slug)?.name || fallback || slug;
 
 function ratingClass(r) {
   r = parseFloat(r);
@@ -88,40 +73,41 @@ const rating = (r) => r ? `<span class="rating ${ratingClass(r)}">${fa(parseFloa
 function formChips(form, max = 5) {
   if (!form) return '';
   const arr = Array.isArray(form) ? form : String(form).split('');
-  const map = { W: ['win', 'ب'], D: ['draw', 'م'], L: ['loss', 'ش'] };
+  const map = { W: ['win', 'ب'], D: ['draw', 'م'], T: ['draw', 'م'], L: ['loss', 'ش'] };
   return `<span class="form">${arr.slice(-max).map(c => map[c] ? `<i class="fc ${map[c][0]}">${map[c][1]}</i>` : '').join('')}</span>`;
 }
 
+const sideOf = (e, teamId) => e.home.id === String(teamId) ? 'home' : 'away';
+const goalsFor = (e, teamId) => Number(e[sideOf(e, teamId)].score);
+const goalsAgainst = (e, teamId) => Number(e[sideOf(e, teamId) === 'home' ? 'away' : 'home'].score);
 function resultFor(e, teamId) {
-  if (e.winnerCode === 3) return 'D';
-  const home = e.homeTeam.id === teamId;
-  if (e.winnerCode === 1) return home ? 'W' : 'L';
-  if (e.winnerCode === 2) return home ? 'L' : 'W';
-  const h = e.homeScore?.current, a = e.awayScore?.current;
-  if (h == null || a == null) return '';
-  return h === a ? 'D' : (h > a) === home ? 'W' : 'L';
+  const gf = goalsFor(e, teamId), ga = goalsAgainst(e, teamId);
+  if (isNaN(gf) || isNaN(ga)) return '';
+  const me = e[sideOf(e, teamId)], them = e[sideOf(e, teamId) === 'home' ? 'away' : 'home'];
+  if (gf === ga) return me.winner ? 'W' : them.winner ? 'L' : 'D';
+  return gf > ga ? 'W' : 'L';
 }
-const goalsFor = (e, teamId) => e.homeTeam.id === teamId ? e.homeScore?.current : e.awayScore?.current;
-const goalsAgainst = (e, teamId) => e.homeTeam.id === teamId ? e.awayScore?.current : e.homeScore?.current;
+const opponentOf = (e, teamId) => e.home.id === String(teamId) ? e.away : e.home;
+
+const matchHref = (e) => `#/match/${e.league}/${e.id}`;
+const teamHref = (league, id) => `#/team/${league || CONFIG.LALIGA}/${id}`;
 
 function matchRow(e) {
-  const h = e.homeTeam, a = e.awayTeam;
+  const h = e.home, a = e.away;
   const score = isUpcoming(e) || isOff(e)
     ? `<span class="score vs">${statusLabel(e)}</span>`
     : `<span class="score ${isLive(e) ? 'is-live' : ''}">${scoreOf(e)}</span>`;
-  return `<a class="match-row ${hasMadrid(e) ? 'is-madrid' : ''} ${isLive(e) ? 'live' : ''}" href="#/match/${e.id}">
-    <span class="mr-status">${isUpcoming(e) ? fmt.short(e.startTimestamp) : statusLabel(e)}</span>
-    <span class="mr-team home ${e.winnerCode === 1 ? 'win' : ''}"><span class="tn">${esc(h.shortName || h.name)}</span>${img(teamLogo(h.id), 'logo-sm')}</span>
+  return `<a class="match-row ${hasMadrid(e) ? 'is-madrid' : ''} ${isLive(e) ? 'live' : ''}" href="${matchHref(e)}">
+    <span class="mr-status">${isUpcoming(e) ? fmt.short(e.ts) : statusLabel(e)}</span>
+    <span class="mr-team home ${h.winner ? 'win' : ''}"><span class="tn">${esc(h.short || h.name)}</span>${img(h.logo || teamLogo(h.id), 'logo-sm')}</span>
     ${score}
-    <span class="mr-team away ${e.winnerCode === 2 ? 'win' : ''}">${img(teamLogo(a.id), 'logo-sm')}<span class="tn">${esc(a.shortName || a.name)}</span></span>
+    <span class="mr-team away ${a.winner ? 'win' : ''}">${img(a.logo || teamLogo(a.id), 'logo-sm')}<span class="tn">${esc(a.short || a.name)}</span></span>
   </a>`;
 }
 
-function leagueGroup(t, list) {
-  const uid = t.uniqueTournament?.id;
-  const head = `${img(uid ? leagueLogo(uid) : '', 'logo-sm')}<span><b>${esc(t.uniqueTournament?.name || t.name)}</b><small>${esc(t.category?.name || '')}</small></span><span class="chev">‹</span>`;
+function leagueGroup(slug, name, logo, list) {
   return `<section class="card league-group">
-    ${uid ? `<a class="lg-head" href="#/league/${uid}">${head}</a>` : `<div class="lg-head">${head}</div>`}
+    <a class="lg-head" href="#/league/${slug}">${img(logo || leagueLogo(slug), 'logo-sm')}<span><b>${esc(leagueName(slug, name))}</b><small>${esc(name)}</small></span><span class="chev">‹</span></a>
     ${list.map(matchRow).join('')}
   </section>`;
 }
@@ -132,8 +118,7 @@ const empty = (msg) => `<div class="empty">${msg}</div>`;
 function errorBox(err) {
   const m = String(err?.message || err);
   let hint = '';
-  if (/HTTP 403/.test(m)) hint = 'SofaScore درخواست را مسدود کرد. اگر فیلترشکن روشن است، سرور آن را عوض کنید یا خاموشش کنید و صفحه را دوباره باز کنید.';
-  else if (/HTTP 5\d\d/.test(m)) hint = 'سرور واسط به SofaScore نرسید. صفحه را دوباره باز کنید.';
+  if (/HTTP 5\d\d/.test(m)) hint = 'سرور واسط به ESPN نرسید. چند لحظه بعد صفحه را دوباره باز کنید.';
   else if (/Failed to fetch|NetworkError|Unexpected token/i.test(m)) hint = 'سایت را با node server.js یا روی Vercel اجرا کنید؛ باز کردن مستقیم فایل HTML کار نمی‌کند.';
   return `<div class="error-box"><b>خطا در دریافت داده</b><code dir="ltr">${esc(m)}</code>${hint ? `<p>${hint}</p>` : ''}</div>`;
 }
@@ -172,10 +157,10 @@ function statCompare(label, h, a, hv, av) {
 
 const statTile = (value, label, sub = '') => `<div class="stat-tile"><b>${value}</b><span>${label}</span>${sub ? `<small>${sub}</small>` : ''}</div>`;
 
-// Split SofaScore's starting XI (GK first, then lines in formation order) into rows.
-function formationRows(lu) {
-  const xi = lu.players.filter(p => !p.substitute);
-  const lines = String(lu.formation || '4-4-2').split('-').map(Number).filter(Boolean);
+// ESPN rosters: starters carry formationPlace 1..11 (1 = keeper) in formation-line order.
+function formationRows(side) {
+  const xi = (side.roster || []).filter(p => p.starter).sort((a, b) => Number(a.formationPlace || 99) - Number(b.formationPlace || 99));
+  const lines = String(side.formation || '4-4-2').split('-').map(Number).filter(Boolean);
   const rows = [xi.slice(0, 1)];
   let i = 1;
   lines.forEach(n => { rows.push(xi.slice(i, i + n)); i += n; });
@@ -183,19 +168,23 @@ function formationRows(lu) {
   return rows.filter(r => r.length);
 }
 
+const statOf = (p, ...names) => { for (const n of names) { const s = (p.stats || []).find(x => x.name === n || x.abbreviation === n); if (s) return Number(s.value ?? s.displayValue) || 0; } return 0; };
+
 function pitchPlayer(p, x, y, cls) {
-  const r = p.statistics?.rating;
-  return `<a class="pp ${cls}" href="#/player/${p.player.id}" style="left:${x}%;top:${y}%">
-    <span class="pp-img">${img(playerPhoto(p.player.id), '', p.player.name)}${r ? rating(r) : ''}</span>
-    <span class="pp-name"><i>${fa(p.shirtNumber ?? p.jerseyNumber ?? '')}</i> ${esc(p.player.shortName ? shortName(p.player.shortName) : shortName(p.player.name))}</span>
+  const a = p.athlete || {};
+  const g = statOf(p, 'totalGoals'), yc = statOf(p, 'yellowCards'), rc = statOf(p, 'redCards');
+  const marks = `${'⚽'.repeat(Math.min(g, 3))}${yc ? '🟨' : ''}${rc ? '🟥' : ''}${p.subbedOut ? '🔻' : ''}`;
+  return `<a class="pp ${cls}" href="#/player/${a.id}" style="left:${x}%;top:${y}%">
+    <span class="pp-img">${img(a.headshot?.href || playerPhoto(a.id), '', a.displayName)}${marks ? `<span class="pp-marks">${marks}</span>` : ''}</span>
+    <span class="pp-name"><i>${fa(p.jersey ?? '')}</i> ${esc(shortName(a.shortName || a.displayName))}</span>
   </a>`;
 }
 
 // Both lineups on one vertical pitch: home attacks upward, away downward.
-function pitch(lineups, home, away) {
-  if (!lineups?.home?.players?.length) return '';
-  const side = (lu, isHome) => {
-    const rows = formationRows(lu), n = rows.length;
+function pitch(home, away) {
+  if (!home?.roster?.some(p => p.starter)) return '';
+  const side = (s, isHome) => {
+    const rows = formationRows(s), n = rows.length;
     return rows.map((ps, i) => {
       const y = isHome ? 94 - (i / Math.max(n - 1, 1)) * 36 : 6 + (i / Math.max(n - 1, 1)) * 36;
       return ps.map((p, j) => {
@@ -206,12 +195,12 @@ function pitch(lineups, home, away) {
     }).join('');
   };
   return `<div class="pitch-wrap">
-    <div class="pitch-label top">${img(teamLogo(away.id), 'logo-sm')} ${esc(away.name)} <b dir="ltr">${esc(lineups.away.formation || '')}</b></div>
+    <div class="pitch-label top">${img(API.logoOf(away.team) || teamLogo(away.team.id), 'logo-sm')} ${esc(away.team.displayName)} <b dir="ltr">${esc(away.formation || '')}</b></div>
     <div class="pitch">
       <div class="pitch-lines"><i class="half"></i><i class="circle"></i><i class="box top"></i><i class="box bottom"></i><i class="six top"></i><i class="six bottom"></i></div>
-      ${side(lineups.away, false)}${side(lineups.home, true)}
+      ${side(away, false)}${side(home, true)}
     </div>
-    <div class="pitch-label bottom">${img(teamLogo(home.id), 'logo-sm')} ${esc(home.name)} <b dir="ltr">${esc(lineups.home.formation || '')}</b></div>
+    <div class="pitch-label bottom">${img(API.logoOf(home.team) || teamLogo(home.team.id), 'logo-sm')} ${esc(home.team.displayName)} <b dir="ltr">${esc(home.formation || '')}</b></div>
   </div>`;
 }
 
