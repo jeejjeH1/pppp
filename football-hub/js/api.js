@@ -37,7 +37,11 @@ const API = (() => {
     if (mode !== 'proxy') {
       try {
         const r = await fetch(DIRECT + encodeURI(path));
-        if (r.ok || r.status === 404) { setMode('direct'); return r; }
+        if (r.status === 404) { setMode('direct'); return r; }
+        if (r.ok) {
+          const text = await r.text();
+          if (text) { setMode('direct'); return new Response(text, { status: 200 }); }
+        }
       } catch { /* blocked by CORS or the network */ }
       if (mode !== 'direct') setMode('proxy');
     }
@@ -53,7 +57,9 @@ const API = (() => {
       const r = await request(path);
       if (r.status === 404) { cacheWrite(path, NONE); return null; }
       if (!r.ok) throw new Error(`SofaScore پاسخ نداد (HTTP ${r.status}) — ${path}`);
-      const j = await r.json();
+      const text = await r.text();
+      let j;
+      try { j = JSON.parse(text); } catch { throw new Error(`پاسخ خالی یا نامعتبر از SofaScore (HTTP ${r.status}، ${mode === 'direct' ? 'مستقیم' : 'سرور واسط'}، ${text.length} بایت) — ${path}`); }
       cacheWrite(path, j);
       return j;
     })().finally(() => inflight.delete(path));

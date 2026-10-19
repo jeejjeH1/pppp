@@ -26,8 +26,11 @@ async function fetchSofa(path) {
     try {
       const r = await fetch(host + path, { headers: HEADERS });
       const body = Buffer.from(await r.arrayBuffer());
-      last = { status: r.status, body, type: r.headers.get('content-type') || 'application/json' };
-      if (r.ok || r.status === 404) return last;
+      last = { status: r.status, body, type: r.headers.get('content-type') || 'application/json', host };
+      if (r.status === 404) return last;
+      // Some hosts answer 200 with an empty or HTML body when they block us; try the next one.
+      if (r.ok && (isImg || isJson(body))) return last;
+      if (r.ok) last = { status: 502, body: Buffer.from(JSON.stringify({ error: `empty or non-JSON reply from ${host}` })), type: 'application/json', host };
     } catch (e) {
       last = { status: 502, body: Buffer.from(JSON.stringify({ error: String(e) })), type: 'application/json' };
     }
@@ -35,12 +38,37 @@ async function fetchSofa(path) {
   return last;
 }
 
+function isJson(buf) {
+  try { JSON.parse(buf.toString('utf8')); return buf.length > 0; } catch { return false; }
+}
+
+// /api/sofa?debug=1 reports what each upstream host returns, to diagnose blocks.
+async function debug(res) {
+  const out = [];
+  for (const host of HOSTS) {
+    const t = Date.now();
+    try {
+      const r = await fetch(host + 'sport/football/events/live', { headers: HEADERS });
+      const text = await r.text();
+      out.push({ host, status: r.status, ms: Date.now() - t, bytes: text.length, type: r.headers.get('content-type'), server: r.headers.get('server'), start: text.slice(0, 160) });
+    } catch (e) {
+      out.push({ host, error: String(e), ms: Date.now() - t });
+    }
+  }
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.end(JSON.stringify(out, null, 2));
+}
+
 function validPath(p) {
   return typeof p === 'string' && p.length < 300 && !p.includes('..') && /^[a-z][\w\-\/]*(\?[\w\-=&%. ]*)?$/i.test(p);
 }
 
 async function handler(req, res) {
-  const path = (req.query && req.query.path) || new URL(req.url, 'http://x').searchParams.get('path');
+  const params = new URL(req.url, 'http://x').searchParams;
+  if (params.get('debug')) return debug(res);
+  const path = (req.query && req.query.path) || params.get('path');
   if (!validPath(path)) {
     res.statusCode = 400;
     res.setHeader('Content-Type', 'application/json');
@@ -51,6 +79,7 @@ async function handler(req, res) {
   res.statusCode = r.status;
   res.setHeader('Content-Type', r.type);
   res.setHeader('Access-Control-Allow-Origin', '*');
+  if (r.host) res.setHeader('X-Sofa-Upstream', r.host);
   res.setHeader('Cache-Control', r.status < 300 ? `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 5}` : 'public, s-maxage=30');
   res.end(r.body);
 }
