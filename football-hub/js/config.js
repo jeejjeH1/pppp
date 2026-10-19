@@ -1,25 +1,22 @@
-// API-Football v3 (api-sports.io). The key comes from js/config.local.js (git-ignored)
-// or from the settings dialog, so it never ends up in the repository.
+// Data comes from SofaScore through the /api/sofa proxy (api/sofa.js).
 window.CONFIG = {
-  API_KEY: window.LOCAL_API_KEY || '',
-  BASE_URL: 'https://v3.football.api-sports.io',
-  MADRID_ID: 541,
-  LALIGA_ID: 140,
-  // Popular competitions, shown first on the home page and in the sidebar.
+  PROXY: '/api/sofa?path=',
+  MADRID_ID: 2829,
+  LALIGA_ID: 8,
+  // SofaScore unique-tournament ids, shown first on the home page and in the sidebar.
   LEAGUES: [
-    { id: 2, name: 'لیگ قهرمانان اروپا' },
-    { id: 39, name: 'لیگ برتر انگلیس' },
-    { id: 140, name: 'لالیگا' },
-    { id: 135, name: 'سری آ' },
-    { id: 78, name: 'بوندسلیگا' },
-    { id: 61, name: 'لوشامپیونه' },
-    { id: 3, name: 'لیگ اروپا' },
-    { id: 848, name: 'لیگ کنفرانس' },
-    { id: 143, name: 'کوپا دل ری' },
-    { id: 556, name: 'سوپرکاپ اسپانیا' },
-    { id: 1, name: 'جام جهانی' },
-    { id: 4, name: 'یورو' },
-    { id: 290, name: 'لیگ برتر ایران' },
-    { id: 307, name: 'لیگ عربستان' },
+    { id: 7, name: 'لیگ قهرمانان اروپا' },
+    { id: 17, name: 'لیگ برتر انگلیس' },
+    { id: 8, name: 'لالیگا' },
+    { id: 23, name: 'سری آ' },
+    { id: 35, name: 'بوندسلیگا' },
+    { id: 34, name: 'لوشامپیونه' },
+    { id: 679, name: 'لیگ اروپا' },
+    { id: 17015, name: 'لیگ کنفرانس' },
+    { id: 329, name: 'کوپا دل ری' },
+    { id: 213, name: 'سوپرکاپ اسپانیا' },
+    { id: 16, name: 'جام جهانی' },
+    { id: 1, name: 'یورو' },
+    { id: 955, name: 'لیگ عربستان' },
   ],
 };

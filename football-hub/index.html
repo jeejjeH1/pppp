@@ -21,7 +21,7 @@
       <a href="#/" data-nav="home">مسابقات</a>
       <a href="#/leagues" data-nav="leagues">لیگ‌ها</a>
       <a href="#/search" data-nav="search">جستجو</a>
-      <a href="#/madrid" data-nav="madrid" class="nav-madrid"><img src="https://media.api-sports.io/football/teams/541.png" alt=""> رئال مادرید</a>
+      <a href="#/madrid" data-nav="madrid" class="nav-madrid"><img src="/api/sofa?path=team%2F2829%2Fimage" alt=""> رئال مادرید</a>
     </nav>
     <button class="icon-btn" id="settingsBtn" title="تنظیمات" aria-label="تنظیمات">⚙</button>
   </header>
@@ -34,28 +34,22 @@
   <nav class="bottomnav">
     <a href="#/" data-nav="home"><span>🏟</span>مسابقات</a>
     <a href="#/leagues" data-nav="leagues"><span>🏆</span>لیگ‌ها</a>
-    <a href="#/madrid" data-nav="madrid" class="nav-madrid"><img src="https://media.api-sports.io/football/teams/541.png" alt="">رئال</a>
+    <a href="#/madrid" data-nav="madrid" class="nav-madrid"><img src="/api/sofa?path=team%2F2829%2Fimage" alt="">رئال</a>
     <a href="#/search" data-nav="search"><span>🔍</span>جستجو</a>
   </nav>
 
   <dialog id="settings" class="modal">
     <form method="dialog" class="modal-body">
       <h3>تنظیمات</h3>
-      <label>کلید API (api-sports.io)
-        <input id="setKey" type="text" dir="ltr" autocomplete="off">
-      </label>
-      <label>فصل
-        <select id="setSeason"></select>
-      </label>
+      <p class="muted">داده‌ها از SofaScore می‌آیند و برای سرعت بیشتر در مرورگر شما کش می‌شوند.</p>
       <div class="quota" id="quota">…</div>
       <div class="modal-actions">
-        <button type="button" class="btn ghost" id="clearCache">پاک کردن کش</button>
-        <button type="submit" class="btn" id="saveSettings" value="save">ذخیره</button>
+        <button type="button" class="btn ghost" id="clearCache">پاک کردن کش و بارگذاری دوباره</button>
+        <button type="submit" class="btn" value="close">بستن</button>
       </div>
     </form>
   </dialog>
 
-  <script src="js/config.local.js" onerror="void 0"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>

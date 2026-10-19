@@ -1,113 +1,94 @@
-// Thin client for API-Football v3 with a localStorage cache, so the daily quota lasts.
+// Client for SofaScore (via the /api/sofa proxy) with a localStorage cache.
 const Store = {
   get(k, d = null) { try { const v = localStorage.getItem('gb:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem('gb:' + k, JSON.stringify(v)); } catch {} },
 };
 
-function defaultSeason() {
-  const d = new Date();
-  return d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1;
-}
-
 const API = (() => {
-  const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Tehran';
   const inflight = new Map();
-  const PREFIX = 'gbc:';
-
-  const apiKey = () => Store.get('apiKey') || CONFIG.API_KEY;
-  const season = () => Number(Store.get('season')) || defaultSeason();
+  const PREFIX = 'gbs:';
+  const NONE = { __none: true };
 
   function cacheRead(k, ttl) {
     try {
       const raw = localStorage.getItem(PREFIX + k);
-      if (!raw) return null;
+      if (!raw) return undefined;
       const { t, d } = JSON.parse(raw);
-      return Date.now() - t < ttl * 1000 ? d : null;
-    } catch { return null; }
+      return Date.now() - t < ttl * 1000 ? d : undefined;
+    } catch { return undefined; }
   }
   function cacheWrite(k, d) {
     const v = JSON.stringify({ t: Date.now(), d });
     try { localStorage.setItem(PREFIX + k, v); }
-    catch {
-      clearCache();
-      try { localStorage.setItem(PREFIX + k, v); } catch {}
-    }
+    catch { clearCache(); try { localStorage.setItem(PREFIX + k, v); } catch {} }
   }
   function clearCache() {
-    try {
-      Object.keys(localStorage).filter(k => k.startsWith(PREFIX)).forEach(k => localStorage.removeItem(k));
-    } catch {}
+    try { Object.keys(localStorage).filter(k => k.startsWith(PREFIX)).forEach(k => localStorage.removeItem(k)); } catch {}
   }
 
-  async function get(path, params = {}, ttl = 300) {
-    const qs = new URLSearchParams(params).toString();
-    const url = `${CONFIG.BASE_URL}/${path}${qs ? '?' + qs : ''}`;
-    if (ttl > 0) {
-      const hit = cacheRead(url, ttl);
-      if (hit) return hit;
-    }
-    if (inflight.has(url)) return inflight.get(url);
+  // Returns the parsed JSON, or null when SofaScore has no data for the path (404).
+  async function get(path, ttl = 300) {
+    const hit = cacheRead(path, ttl);
+    if (hit !== undefined) return hit.__none ? null : hit;
+    if (inflight.has(path)) return inflight.get(path);
     const p = (async () => {
-      const r = await fetch(url, { headers: { 'x-apisports-key': apiKey() } });
-      if (!r.ok) throw new Error(`خطای شبکه (HTTP ${r.status})`);
+      const r = await fetch(CONFIG.PROXY + encodeURIComponent(path));
+      if (r.status === 404) { cacheWrite(path, NONE); return null; }
+      if (!r.ok) throw new Error(`SofaScore پاسخ نداد (HTTP ${r.status}) — ${path}`);
       const j = await r.json();
-      const errs = j.errors ? (Array.isArray(j.errors) ? j.errors : Object.values(j.errors)) : [];
-      if (errs.length) throw new Error(errs.join(' — '));
-      if (ttl > 0) cacheWrite(url, j.response);
-      return j.response;
-    })().finally(() => inflight.delete(url));
-    inflight.set(url, p);
+      cacheWrite(path, j);
+      return j;
+    })().finally(() => inflight.delete(path));
+    inflight.set(path, p);
     return p;
   }
 
-  // Fetch every page of a paginated endpoint (players).
-  async function getAll(path, params, ttl, maxPages = 4) {
-    const out = [];
-    for (let page = 1; page <= maxPages; page++) {
-      const res = await get(path, { ...params, page }, ttl);
-      out.push(...res);
-      if (res.length < 20) break;
-    }
-    return out;
-  }
-
-  const byDate = (a, b) => a.fixture.timestamp - b.fixture.timestamp;
+  const byTime = (a, b) => a.startTimestamp - b.startTimestamp;
+  const events = async (path, ttl) => ((await get(path, ttl))?.events || []).sort(byTime);
+  const seasonCache = {};
 
   return {
-    TZ, season, clearCache,
-    status: () => fetch(`${CONFIG.BASE_URL}/status`, { headers: { 'x-apisports-key': apiKey() } }).then(r => r.json()),
+    clearCache,
+    image: (kind, id) => CONFIG.PROXY + encodeURIComponent(`${kind}/${id}/image`),
 
-    fixturesByDate: (date) => get('fixtures', { date, timezone: TZ }, 120),
-    live: () => get('fixtures', { live: 'all', timezone: TZ }, 30),
-    fixture: async (id) => (await get('fixtures', { id, timezone: TZ }, 45))[0],
-    h2h: async (a, b) => (await get('fixtures/headtohead', { h2h: `${a}-${b}`, timezone: TZ }, 3600 * 6))
-      .filter(f => ['FT', 'AET', 'PEN'].includes(f.fixture.status.short)).sort(byDate).reverse(),
-    predictions: async (fixture) => (await get('predictions', { fixture }, 3600 * 3))[0],
-    injuries: (params) => get('injuries', { ...params, timezone: TZ }, 3600 * 3),
+    scheduled: (date) => events(`sport/football/scheduled-events/${date}`, 120),
+    live: () => events('sport/football/events/live', 30),
 
-    // One request per season returns every fixture, so "next"/"last" are derived client-side
-    // (the free plan does not allow the next/last parameters).
-    teamFixtures: async (team, s = season()) => (await get('fixtures', { team, season: s, timezone: TZ }, 600)).sort(byDate),
-    leagueFixtures: async (league, s = season()) => (await get('fixtures', { league, season: s, timezone: TZ }, 600)).sort(byDate),
+    event: async (id) => (await get(`event/${id}`, 30))?.event,
+    incidents: async (id) => (await get(`event/${id}/incidents`, 30))?.incidents || [],
+    lineups: (id) => get(`event/${id}/lineups`, 60),
+    statistics: async (id) => (await get(`event/${id}/statistics`, 30))?.statistics || [],
+    h2h: async (id) => (await get(`event/${id}/h2h`, 3600))?.teamDuel,
+    h2hEvents: (customId) => events(`event/${customId}/h2h/events`, 3600).then(l => l.reverse()),
+    pregame: (id) => get(`event/${id}/pregame-form`, 1800),
+    votes: async (id) => (await get(`event/${id}/votes`, 300))?.vote,
 
-    leagues: (params) => get('leagues', params, 3600 * 24),
-    standings: async (league, s = season()) => {
-      const r = await get('standings', { league, season: s }, 1800);
-      return r[0]?.league || null;
+    team: async (id) => (await get(`team/${id}`, 86400))?.team,
+    teamNext: (id) => events(`team/${id}/events/next/0`, 300),
+    teamLast: (id) => events(`team/${id}/events/last/0`, 300),
+    teamPlayers: async (id) => (await get(`team/${id}/players`, 43200))?.players || [],
+    teamStats: async (id, tid, sid) => (await get(`team/${id}/unique-tournament/${tid}/season/${sid}/statistics/overall`, 1800))?.statistics,
+    teamTop: async (id, tid, sid) => (await get(`team/${id}/unique-tournament/${tid}/season/${sid}/top-players/overall`, 1800))?.topPlayers,
+
+    tournament: async (tid) => (await get(`unique-tournament/${tid}`, 86400 * 7))?.uniqueTournament,
+    seasons: async (tid) => (await get(`unique-tournament/${tid}/seasons`, 86400))?.seasons || [],
+    // The first season listed is the current one.
+    currentSeason: async function (tid) {
+      if (!seasonCache[tid]) seasonCache[tid] = this.seasons(tid).then(s => s[0]);
+      return seasonCache[tid];
     },
-    topScorers: (league, s = season()) => get('players/topscorers', { league, season: s }, 3600 * 3),
-    topAssists: (league, s = season()) => get('players/topassists', { league, season: s }, 3600 * 3),
-    topYellow: (league, s = season()) => get('players/topyellowcards', { league, season: s }, 3600 * 6),
+    standings: async (tid, sid) => (await get(`unique-tournament/${tid}/season/${sid}/standings/total`, 900))?.standings || [],
+    topPlayers: async (tid, sid) => (await get(`unique-tournament/${tid}/season/${sid}/top-players/overall`, 1800))?.topPlayers,
+    rounds: (tid, sid) => get(`unique-tournament/${tid}/season/${sid}/rounds`, 3600),
+    roundEvents: (tid, sid, round) => events(`unique-tournament/${tid}/season/${sid}/events/round/${round}`, 300),
+    tournamentNext: (tid, sid) => events(`unique-tournament/${tid}/season/${sid}/events/next/0`, 300),
+    tournamentLast: (tid, sid) => events(`unique-tournament/${tid}/season/${sid}/events/last/0`, 300),
 
-    team: async (id) => (await get('teams', { id }, 3600 * 24 * 7))[0],
-    teamStats: (team, league, s = season()) => get('teams/statistics', { team, league, season: s }, 3600 * 3),
-    squad: async (team) => (await get('players/squads', { team }, 3600 * 12))[0],
-    teamPlayers: (team, s = season()) => getAll('players', { team, season: s }, 3600 * 6),
+    player: async (id) => (await get(`player/${id}`, 86400))?.player,
+    playerSeasons: async (id) => (await get(`player/${id}/statistics/seasons`, 86400))?.uniqueTournamentSeasons || [],
+    playerStats: async (id, tid, sid) => (await get(`player/${id}/unique-tournament/${tid}/season/${sid}/statistics/overall`, 1800))?.statistics,
+    playerLast: (id) => events(`player/${id}/events/last/0`, 600),
 
-    player: async (id, s = season()) => (await get('players', { id, season: s }, 3600 * 3))[0],
-    trophies: (player) => get('trophies', { player }, 3600 * 24 * 7),
-
-    searchTeams: (q) => get('teams', { search: q }, 3600 * 24),
-    searchPlayers: (q) => get('players/profiles', { search: q }, 3600 * 24),
+    search: async (q) => (await get(`search/all?q=${q}`, 3600))?.results || [],
   };
 })();

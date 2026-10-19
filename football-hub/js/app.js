@@ -50,35 +50,21 @@ const App = (() => {
 
   function settings() {
     const dlg = document.getElementById('settings');
-    const sel = document.getElementById('setSeason');
-    const cur = defaultSeason();
-    for (let y = cur + 1; y >= cur - 6; y--) sel.insertAdjacentHTML('beforeend', `<option value="${y}">${y}-${String(y + 1).slice(2)}</option>`);
     document.getElementById('settingsBtn').addEventListener('click', async () => {
-      document.getElementById('setKey').value = Store.get('apiKey') || CONFIG.API_KEY;
-      sel.value = API.season();
       const q = document.getElementById('quota');
-      q.textContent = 'در حال بررسی سهمیه…';
+      q.textContent = 'در حال بررسی اتصال به SofaScore…';
       dlg.showModal();
       try {
-        const s = await API.status();
-        const r = s.response;
-        q.innerHTML = r?.requests
-          ? `پلن: <b>${esc(r.subscription?.plan)}</b> · درخواست امروز: <b>${fa(r.requests.current)}</b> از ${fa(r.requests.limit_day)}`
-          : `<span dir="ltr">${esc(JSON.stringify(s.errors))}</span>`;
-      } catch (e) { q.textContent = 'اتصال به API برقرار نشد: ' + e.message; }
-    });
-    document.getElementById('saveSettings').addEventListener('click', () => {
-      const k = document.getElementById('setKey').value.trim();
-      Store.set('apiKey', k && k !== CONFIG.API_KEY ? k : null);
-      Store.set('season', Number(sel.value) === defaultSeason() ? null : Number(sel.value));
-      render();
+        const t = performance.now();
+        const live = await API.live();
+        q.innerHTML = `✅ اتصال برقرار است · ${fa(live.length)} بازی زنده · ${fa(Math.round(performance.now() - t))} میلی‌ثانیه`;
+      } catch (e) { q.innerHTML = `❌ اتصال برقرار نشد: <span dir="ltr">${esc(e.message)}</span>`; }
     });
     document.getElementById('clearCache').addEventListener('click', () => { API.clearCache(); dlg.close(); render(); });
   }
 
   sidebar();
   settings();
-  if (!Store.get('apiKey') && !CONFIG.API_KEY) document.getElementById('settingsBtn').click();
   addEventListener('hashchange', () => { scrollTo(0, 0); render(); });
   render();
   return { autoRefresh, render };
