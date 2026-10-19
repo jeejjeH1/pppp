@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>گل‌باکس | آمار زنده فوتبال</title>
+  <meta name="description" content="نتایج زنده، جدول لیگ‌ها، آمار تیمی و فردی و بازی‌های آینده — با هاب ویژه رئال مادرید">
+  <meta name="theme-color" content="#0b0d12">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/">
+      <span class="brand-ball">⚽</span>
+      <span class="brand-name">گل‌باکس</span>
+    </a>
+    <nav class="topnav">
+      <a href="#/" data-nav="home">مسابقات</a>
+      <a href="#/leagues" data-nav="leagues">لیگ‌ها</a>
+      <a href="#/search" data-nav="search">جستجو</a>
+      <a href="#/madrid" data-nav="madrid" class="nav-madrid"><img src="https://media.api-sports.io/football/teams/541.png" alt=""> رئال مادرید</a>
+    </nav>
+    <button class="icon-btn" id="settingsBtn" title="تنظیمات" aria-label="تنظیمات">⚙</button>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main id="app" class="main"></main>
+  </div>
+
+  <nav class="bottomnav">
+    <a href="#/" data-nav="home"><span>🏟</span>مسابقات</a>
+    <a href="#/leagues" data-nav="leagues"><span>🏆</span>لیگ‌ها</a>
+    <a href="#/madrid" data-nav="madrid" class="nav-madrid"><img src="https://media.api-sports.io/football/teams/541.png" alt="">رئال</a>
+    <a href="#/search" data-nav="search"><span>🔍</span>جستجو</a>
+  </nav>
+
+  <dialog id="settings" class="modal">
+    <form method="dialog" class="modal-body">
+      <h3>تنظیمات</h3>
+      <label>کلید API (api-sports.io)
+        <input id="setKey" type="text" dir="ltr" autocomplete="off">
+      </label>
+      <label>فصل
+        <select id="setSeason"></select>
+      </label>
+      <div class="quota" id="quota">…</div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="clearCache">پاک کردن کش</button>
+        <button type="submit" class="btn" id="saveSettings" value="save">ذخیره</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/config.local.js" onerror="void 0"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/madrid.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
