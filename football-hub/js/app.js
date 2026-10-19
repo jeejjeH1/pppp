@@ -57,10 +57,10 @@ const App = (() => {
       try {
         const t = performance.now();
         const live = await API.live();
-        q.innerHTML = `✅ اتصال برقرار است · ${fa(live.length)} بازی زنده · ${fa(Math.round(performance.now() - t))} میلی‌ثانیه`;
+        q.innerHTML = `✅ اتصال برقرار است (${API.mode() === 'direct' ? 'مستقیم از مرورگر' : 'از طریق سرور واسط'}) · ${fa(live.length)} بازی زنده · ${fa(Math.round(performance.now() - t))} میلی‌ثانیه`;
       } catch (e) { q.innerHTML = `❌ اتصال برقرار نشد: <span dir="ltr">${esc(e.message)}</span>`; }
     });
-    document.getElementById('clearCache').addEventListener('click', () => { API.clearCache(); dlg.close(); render(); });
+    document.getElementById('clearCache').addEventListener('click', () => { API.clearCache(); try { sessionStorage.removeItem('gb:mode'); } catch {} location.reload(); });
   }
 
   sidebar();

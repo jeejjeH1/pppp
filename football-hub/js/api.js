@@ -26,13 +26,31 @@ const API = (() => {
     try { Object.keys(localStorage).filter(k => k.startsWith(PREFIX)).forEach(k => localStorage.removeItem(k)); } catch {}
   }
 
+  // SofaScore blocks most server IPs, so the viewer's browser asks SofaScore directly first
+  // and only falls back to the /api/sofa proxy when that fails (e.g. CORS or a network block).
+  const DIRECT = 'https://api.sofascore.com/api/v1/';
+  let mode = null;
+  try { mode = sessionStorage.getItem('gb:mode'); } catch {}
+  const setMode = (m) => { mode = m; try { sessionStorage.setItem('gb:mode', m); } catch {} };
+
+  async function request(path) {
+    if (mode !== 'proxy') {
+      try {
+        const r = await fetch(DIRECT + encodeURI(path));
+        if (r.ok || r.status === 404) { setMode('direct'); return r; }
+      } catch { /* blocked by CORS or the network */ }
+      if (mode !== 'direct') setMode('proxy');
+    }
+    return fetch(CONFIG.PROXY + encodeURIComponent(path));
+  }
+
   // Returns the parsed JSON, or null when SofaScore has no data for the path (404).
   async function get(path, ttl = 300) {
     const hit = cacheRead(path, ttl);
     if (hit !== undefined) return hit.__none ? null : hit;
     if (inflight.has(path)) return inflight.get(path);
     const p = (async () => {
-      const r = await fetch(CONFIG.PROXY + encodeURIComponent(path));
+      const r = await request(path);
       if (r.status === 404) { cacheWrite(path, NONE); return null; }
       if (!r.ok) throw new Error(`SofaScore پاسخ نداد (HTTP ${r.status}) — ${path}`);
       const j = await r.json();
@@ -49,7 +67,8 @@ const API = (() => {
 
   return {
     clearCache,
-    image: (kind, id) => CONFIG.PROXY + encodeURIComponent(`${kind}/${id}/image`),
+    mode: () => mode,
+    image: (kind, id) => `https://img.sofascore.com/api/v1/${kind}/${id}/image`,
 
     scheduled: (date) => events(`sport/football/scheduled-events/${date}`, 120),
     live: () => events('sport/football/events/live', 30),

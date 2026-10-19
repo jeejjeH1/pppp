@@ -64,7 +64,13 @@ const STAT_FA = {
 };
 const GROUP_FA = { 'Match overview': 'نمای کلی', Shots: 'شوت‌ها', Attack: 'حمله', Passes: 'پاس‌ها', Duels: 'دوئل‌ها', Defending: 'دفاع', Goalkeeping: 'دروازه‌بانی' };
 
-const img = (src, cls = '', alt = '') => src ? `<img class="${cls}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" onerror="this.style.visibility='hidden'">` : `<span class="${cls} img-ph"></span>`;
+// Images load straight from SofaScore's CDN; on failure retry once through the proxy, then hide.
+function imgFallback(el) {
+  const m = el.src.match(/img\.sofascore\.com\/api\/v1\/(.+)$/);
+  if (m && !el.dataset.retried) { el.dataset.retried = '1'; el.src = CONFIG.PROXY + encodeURIComponent(m[1]); }
+  else el.style.visibility = 'hidden';
+}
+const img = (src, cls = '', alt = '') => src ? `<img class="${cls}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" referrerpolicy="no-referrer" onerror="imgFallback(this)">` : `<span class="${cls} img-ph"></span>`;
 const teamLogo = (id) => API.image('team', id);
 const playerPhoto = (id) => API.image('player', id);
 const leagueLogo = (id) => API.image('unique-tournament', id);
@@ -126,7 +132,7 @@ const empty = (msg) => `<div class="empty">${msg}</div>`;
 function errorBox(err) {
   const m = String(err?.message || err);
   let hint = '';
-  if (/HTTP 403/.test(m)) hint = 'SofaScore درخواست را مسدود کرد. چند دقیقه بعد دوباره امتحان کنید.';
+  if (/HTTP 403/.test(m)) hint = 'SofaScore درخواست را مسدود کرد. اگر فیلترشکن روشن است، سرور آن را عوض کنید یا خاموشش کنید و صفحه را دوباره باز کنید.';
   else if (/HTTP 5\d\d/.test(m)) hint = 'سرور واسط به SofaScore نرسید. صفحه را دوباره باز کنید.';
   else if (/Failed to fetch|NetworkError|Unexpected token/i.test(m)) hint = 'سایت را با node server.js یا روی Vercel اجرا کنید؛ باز کردن مستقیم فایل HTML کار نمی‌کند.';
   return `<div class="error-box"><b>خطا در دریافت داده</b><code dir="ltr">${esc(m)}</code>${hint ? `<p>${hint}</p>` : ''}</div>`;

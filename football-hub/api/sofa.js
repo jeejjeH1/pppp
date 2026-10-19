@@ -1,6 +1,6 @@
 // Vercel serverless proxy for SofaScore's public web API.
 // SofaScore does not send CORS headers, so the browser calls /api/sofa?path=<api path> instead.
-const HOSTS = ['https://api.sofascore.com/api/v1/', 'https://www.sofascore.com/api/v1/'];
+const HOSTS = ['https://api.sofascore.com/api/v1/', 'https://www.sofascore.com/api/v1/', 'https://api.sofascore.app/api/v1/'];
 const IMG_HOSTS = ['https://img.sofascore.com/api/v1/', 'https://api.sofascore.app/api/v1/'];
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36',
