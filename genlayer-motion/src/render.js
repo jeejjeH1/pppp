@@ -18,6 +18,8 @@ const args = Object.fromEntries(
 const FPS = Number(args.fps ?? 60);
 const W = 1920;
 const H = 1080;
+const SCALE = Number(args.scale ?? 1); // >1 = supersample, downscaled with lanczos on encode
+const QUALITY = Number(args.quality ?? 97);
 
 const MIME = { '.ttf': 'font/ttf', '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json' };
 function serve() {
@@ -36,7 +38,7 @@ function serve() {
 }
 
 async function openPage(browser, port) {
-  const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: SCALE });
   page.on('console', (m) => (m.type() === 'error' || m.type() === 'warning') && console.log('[page]', m.text()));
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
   await page.goto(`http://localhost:${port}/${args.page ?? 'src/index.html'}`);
@@ -46,7 +48,7 @@ async function openPage(browser, port) {
 
 async function frame(page, t) {
   await page.evaluate((tt) => window.renderAt(tt), t);
-  return page.screenshot({ type: args.stills ? 'png' : 'jpeg', quality: args.stills ? undefined : 97, clip: { x: 0, y: 0, width: W, height: H } });
+  return page.screenshot({ type: args.stills ? 'png' : 'jpeg', quality: args.stills ? undefined : QUALITY, clip: { x: 0, y: 0, width: W, height: H } });
 }
 
 async function main() {
@@ -103,7 +105,7 @@ async function main() {
       if (a >= b) return null;
       const page = await openPage(browser, port);
       const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
-        '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', '-tune', 'animation', seg], { stdio: ['pipe', 'inherit', 'inherit'] });
+        ...(SCALE !== 1 ? ['-vf', `scale=${W}:${H}:flags=lanczos`] : []), '-c:v', 'libx264', '-preset', 'slow', '-crf', String(args.crf ?? 14), '-pix_fmt', 'yuv420p', '-tune', 'animation', seg], { stdio: ['pipe', 'inherit', 'inherit'] });
       for (let i = a; i < b; i++) {
         const buf = await frame(page, from + i / FPS);
         if (!ff.stdin.write(buf)) await new Promise((r) => ff.stdin.once('drain', r));

@@ -7,7 +7,7 @@ import { LOGO_POLYS, LOGO_CENTER } from '../palette.js';
 const canvasEl = document.createElement('canvas');
 canvasEl.id = 'gl';
 const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, alpha: true, preserveDrawingBuffer: true });
-renderer.setPixelRatio(1);
+renderer.setPixelRatio(window.devicePixelRatio || 1);
 renderer.setSize(1920, 1080, false);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
