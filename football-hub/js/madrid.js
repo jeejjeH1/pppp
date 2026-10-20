@@ -12,7 +12,7 @@ function fillSection(root, sel, fn) {
 
 const crown = `<svg class="rm-crown" viewBox="0 0 64 32" aria-hidden="true"><path d="M4 28 L8 8 L20 20 L32 2 L44 20 L56 8 L60 28 Z" fill="currentColor"/><circle cx="8" cy="7" r="3" fill="currentColor"/><circle cx="32" cy="2.5" r="3" fill="currentColor"/><circle cx="56" cy="7" r="3" fill="currentColor"/></svg>`;
 const sparkles = () => `<div class="rm-sparkles">${Array.from({ length: 24 }, (_, i) => `<i style="--x:${(i * 37) % 100}%;--d:${(i % 7) * 0.8}s;--s:${6 + (i % 5) * 2}s"></i>`).join('')}</div>`;
-const rmSchedule = () => API.teamSchedule(RM, CONFIG.MADRID_LEAGUES);
+const rmSchedule = () => API.teamSchedule(RM);
 
 // LaLiga leader boards narrowed to Madrid players.
 async function madridLeaders() {
@@ -31,7 +31,7 @@ MadridViews.hub = async (el, _p, q) => {
       </div>
       <div id="rmNext" class="rm-next"></div>
     </div>
-    ${tabs('rm', [['overview', 'خانه'], ['fixtures', 'برنامه'], ['stats', 'آمار تیمی'], ['players', 'ستاره‌ها'], ['squad', 'بازیکنان'], ['injuries', 'مصدومان'], ['news', 'اخبار']], q.tab || 'overview')}
+    ${tabs('rm', [['overview', 'خانه'], ['fixtures', 'برنامه'], ['stats', 'آمار تیمی'], ['players', 'ستاره‌ها'], ['squad', 'بازیکنان'], ['injuries', 'مصدومان']], q.tab || 'overview')}
     <div id="rmBody"></div>`;
 
   let all = [], team = null;
@@ -55,13 +55,12 @@ MadridViews.hub = async (el, _p, q) => {
     },
     squad: async () => squadView(await API.roster(CONFIG.LALIGA, RM), 'rm-card'),
     injuries: async () => injuriesView(await API.roster(CONFIG.LALIGA, RM)),
-    news: async () => newsList(await API.news(CONFIG.LALIGA, RM)),
   }, q.tab || 'overview');
 };
 
-function injuriesView(roster) {
+function injuriesView(roster, teamName = 'رئال مادرید') {
   const hurt = (roster || []).filter(a => a.injuries?.length);
-  if (!hurt.length) return empty('✅ ESPN مصدومی برای رئال مادرید گزارش نکرده');
+  if (!hurt.length) return empty(`✅ مصدومی برای ${esc(teamName)} گزارش نشده`);
   return `<div class="card rm-card"><div class="card-head"><b>🚑 مصدومان و غایبان</b><small>${fa(hurt.length)} بازیکن</small></div>
     ${hurt.map(a => { const i = a.injuries[0]; return `<a class="board-row" href="#/player/${a.id}">${img(a.headshot?.href || playerPhoto(a.id), 'avatar')}
       <span class="br-name"><b>${esc(a.displayName)}</b><small dir="auto">${esc(i.details?.type || i.type?.description || i.longComment || i.shortComment || '')}${i.details?.returnDate ? ' · بازگشت: ' + new Date(i.details.returnDate).toLocaleDateString('fa-IR') : ''}</small></span>
@@ -148,19 +147,18 @@ MadridViews.preview = async (el, e, s) => {
     <section class="rm-section"><h2>ستاره‌های فصل</h2><div id="rmStars"></div></section>
     <section class="rm-section"><h2>فرم دو تیم</h2><div id="rmForm"></div></section>
     <section class="rm-section"><h2>تاریخچه رویارویی</h2><div id="rmH2H"></div></section>
-    <section class="rm-section"><h2>غایبان رئال</h2><div id="rmInj"></div></section>
-    <section class="rm-section"><h2>اخبار پیش از بازی</h2><div id="rmNews"></div></section>`;
+    <section class="rm-section"><h2>غایبان رئال</h2><div id="rmInj"></div></section>`;
   startCountdowns();
 
   fillSection(el, '#rmPred', async () => {
     const p = oddsProb(s);
-    if (!p) return empty('ضرایب این بازی هنوز منتشر نشده');
+    if (!p) return empty('پیش‌بینی این بازی هنوز منتشر نشده (یا در پلن شما نیست)');
     const rmP = rmHome ? p.home : p.away, opP = rmHome ? p.away : p.home;
     return `<div class="rm-prob">
         <div class="rp rm" style="flex:${rmP}"><b>${pct(rmP)}</b><small>رئال مادرید</small></div>
         ${p.draw ? `<div class="rp d" style="flex:${p.draw}"><b>${pct(p.draw)}</b><small>مساوی</small></div>` : ''}
         <div class="rp op" style="flex:${opP}"><b>${pct(opP)}</b><small>${esc(opp.short || opp.name)}</small></div>
-      </div><p class="muted">احتمال‌ها از ضرایب ${esc(p.provider || 'شرط‌بندی')} محاسبه شده${p.overUnder ? ` · خط گل: <span dir="ltr">${esc(p.overUnder)}</span>` : ''}</p>`;
+      </div><p class="muted">پیش‌بینی ${esc(p.provider || '')}</p>`;
   });
 
   fillSection(el, '#rmXI', async () => {
@@ -208,7 +206,6 @@ MadridViews.preview = async (el, e, s) => {
 
   fillSection(el, '#rmH2H', () => h2hView(e, s));
   fillSection(el, '#rmInj', async () => injuriesView(await API.roster(CONFIG.LALIGA, RM)));
-  fillSection(el, '#rmNews', async () => newsList(s.news?.articles?.length ? s.news.articles : await API.news(CONFIG.LALIGA, RM)));
 };
 
 // Single-team vertical pitch for Madrid's XI.

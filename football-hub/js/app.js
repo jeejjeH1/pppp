@@ -41,26 +41,41 @@ const App = (() => {
     }, sec * 1000);
   }
 
-  function sidebar() {
-    document.getElementById('sidebar').innerHTML = `
-      <a class="side-madrid" href="#/madrid">${img(teamLogo(CONFIG.MADRID_ID), 'logo-md')}<span><b>رئال مادرید</b><small>هاب ویژه کهکشانی‌ها</small></span></a>
-      <div class="side-title">رقابت‌های محبوب</div>
-      ${CONFIG.LEAGUES.map(l => `<a class="side-link" href="#/league/${l.id}">${img(leagueLogo(l.id), 'logo-sm')}<span>${l.name}</span></a>`).join('')}`;
+  async function sidebar() {
+    const bar = document.getElementById('sidebar');
+    const head = `<a class="side-madrid" href="#/madrid">${img(teamLogo(CONFIG.MADRID_ID), 'logo-md')}<span><b>رئال مادرید</b><small>هاب ویژه کهکشانی‌ها</small></span></a>
+      <div class="side-title">رقابت‌های پلن شما</div>`;
+    bar.innerHTML = head + loader('');
+    try {
+      const list = sortLeagues(await API.leagues());
+      bar.innerHTML = head + list.map(l => `<a class="side-link" href="#/league/${l.id}">${img(API.logoOf(l) || leagueLogo(l.id), 'logo-sm')}<span>${esc(leagueName(l.id, l.name))}</span></a>`).join('');
+    } catch (e) {
+      bar.innerHTML = head;
+      // No token on the server and none saved here yet: ask for one.
+      if (/HTTP 401/.test(e.message) && !Store.get('smToken')) document.getElementById('settingsBtn').click();
+    }
   }
 
   function settings() {
     const dlg = document.getElementById('settings');
+    const key = document.getElementById('setKey');
     document.getElementById('settingsBtn').addEventListener('click', async () => {
+      key.value = Store.get('smToken') || '';
       const q = document.getElementById('quota');
-      q.textContent = 'در حال بررسی اتصال به ESPN…';
+      q.textContent = 'در حال بررسی اتصال به Sportmonks…';
       dlg.showModal();
       try {
         const t = performance.now();
-        const live = await API.live(CONFIG.LEAGUES.map(l => l.id));
-        q.innerHTML = `✅ اتصال برقرار است (${API.mode() === 'direct' ? 'مستقیم از مرورگر' : 'از طریق سرور واسط'}) · ${fa(live.length)} بازی زنده · ${fa(Math.round(performance.now() - t))} میلی‌ثانیه`;
+        const ls = await API.leagues();
+        q.innerHTML = `✅ اتصال برقرار است · ${fa(ls.length)} لیگ در پلن شما · ${fa(Math.round(performance.now() - t))} میلی‌ثانیه`;
       } catch (e) { q.innerHTML = `❌ اتصال برقرار نشد: <span dir="ltr">${esc(e.message)}</span>`; }
     });
-    document.getElementById('clearCache').addEventListener('click', () => { API.clearCache(); try { sessionStorage.removeItem('gb:espn-mode'); } catch {} location.reload(); });
+    document.getElementById('saveSettings').addEventListener('click', () => {
+      Store.set('smToken', key.value.trim() || null);
+      API.clearCache();
+      location.reload();
+    });
+    document.getElementById('clearCache').addEventListener('click', () => { API.clearCache(); location.reload(); });
   }
 
   sidebar();

@@ -1,28 +1,28 @@
-// Data comes from ESPN's public API (no key). The /api/espn proxy is only a fallback.
+// Data comes from the Sportmonks Football API v3 through the /api/sm proxy (api/sm.js),
+// which holds the API token server-side.
 window.CONFIG = {
-  PROXY: '/api/espn?url=',
-  MADRID_ID: '86',
-  LALIGA: 'esp.1',
-  // Competitions Madrid plays in, merged for its full-season schedule.
-  MADRID_LEAGUES: ['esp.1', 'uefa.champions', 'esp.copa_del_rey', 'esp.super_cup', 'fifa.cwc'],
-  // ESPN league slugs, shown first on the home page and in the sidebar.
+  PROXY: '/api/sm?path=',
+  MADRID_ID: '3468',
+  LALIGA: '564',
+  // Persian names and display order for well-known Sportmonks league ids. The sidebar shows
+  // whichever leagues the token's plan includes, in this order first.
   LEAGUES: [
-    { id: 'uefa.champions', name: 'لیگ قهرمانان اروپا' },
-    { id: 'eng.1', name: 'لیگ برتر انگلیس' },
-    { id: 'esp.1', name: 'لالیگا' },
-    { id: 'ita.1', name: 'سری آ' },
-    { id: 'ger.1', name: 'بوندسلیگا' },
-    { id: 'fra.1', name: 'لوشامپیونه' },
-    { id: 'uefa.europa', name: 'لیگ اروپا' },
-    { id: 'uefa.europa.conf', name: 'لیگ کنفرانس' },
-    { id: 'esp.copa_del_rey', name: 'کوپا دل ری' },
-    { id: 'esp.super_cup', name: 'سوپرکاپ اسپانیا' },
-    { id: 'eng.fa', name: 'جام حذفی انگلیس' },
-    { id: 'por.1', name: 'لیگ پرتغال' },
-    { id: 'ned.1', name: 'اردیویسی هلند' },
-    { id: 'ksa.1', name: 'لیگ عربستان' },
-    { id: 'fifa.world', name: 'جام جهانی' },
-    { id: 'uefa.euro', name: 'یورو' },
-    { id: 'uefa.nations', name: 'لیگ ملت‌های اروپا' },
+    { id: '2', name: 'لیگ قهرمانان اروپا' },
+    { id: '8', name: 'لیگ برتر انگلیس' },
+    { id: '564', name: 'لالیگا' },
+    { id: '384', name: 'سری آ' },
+    { id: '82', name: 'بوندسلیگا' },
+    { id: '301', name: 'لوشامپیونه' },
+    { id: '5', name: 'لیگ اروپا' },
+    { id: '2286', name: 'لیگ کنفرانس' },
+    { id: '570', name: 'کوپا دل ری' },
+    { id: '567', name: 'لالیگا ۲' },
+    { id: '24', name: 'جام حذفی انگلیس' },
+    { id: '27', name: 'جام اتحادیه انگلیس' },
+    { id: '72', name: 'اردیویسی هلند' },
+    { id: '462', name: 'لیگ پرتغال' },
+    { id: '271', name: 'سوپرلیگا دانمارک' },
+    { id: '501', name: 'لیگ برتر اسکاتلند' },
+    { id: '732', name: 'جام جهانی' },
   ],
 };

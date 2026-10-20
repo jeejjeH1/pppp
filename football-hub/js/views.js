@@ -1,5 +1,5 @@
 // Page renderers. Each view gets (el, params, query) and fills `el`.
-const popularRank = (slug) => { const i = CONFIG.LEAGUES.findIndex(l => l.id === slug); return i < 0 ? 999 : i; };
+const popularRank = (id) => { const i = CONFIG.LEAGUES.findIndex(l => l.id === String(id)); return i < 0 ? 999 : i; };
 const ALL_SLUGS = CONFIG.LEAGUES.map(l => l.id);
 const Views = {};
 
@@ -53,9 +53,19 @@ Views.madridTeaser = async (host) => {
 
 /* ---------- Leagues grid ---------- */
 Views.leagues = async (el) => {
-  el.innerHTML = `<h1 class="page-title">رقابت‌ها</h1>
-    <div class="league-grid">${CONFIG.LEAGUES.map(l => `<a class="league-tile card" href="#/league/${l.id}">${img(leagueLogo(l.id), 'logo-lg')}<b>${l.name}</b></a>`).join('')}</div>`;
+  el.innerHTML = `<h1 class="page-title">رقابت‌ها</h1><div id="lgGrid">${loader()}</div>`;
+  try {
+    const list = sortLeagues(await API.leagues());
+    el.querySelector('#lgGrid').innerHTML = list.length
+      ? `<div class="league-grid">${list.map(l => `<a class="league-tile card" href="#/league/${l.id}">${img(API.logoOf(l) || leagueLogo(l.id), 'logo-lg')}<b>${esc(leagueName(l.id, l.name))}</b><small>${esc(l.country?.name || '')}</small></a>`).join('')}</div>`
+      : empty('پلن Sportmonks شما هیچ لیگی ندارد');
+  } catch (e) { el.querySelector('#lgGrid').innerHTML = errorBox(e); }
 };
+
+// Plan leagues, well-known ones first in CONFIG order.
+function sortLeagues(list) {
+  return [...(list || [])].sort((a, b) => popularRank(String(a.id)) - popularRank(String(b.id)) || String(a.name).localeCompare(b.name));
+}
 
 /* ---------- League ---------- */
 Views.league = async (el, { id: slug }, q) => {
@@ -63,9 +73,13 @@ Views.league = async (el, { id: slug }, q) => {
       ${img(leagueLogo(slug), 'logo-xl')}
       <div><h1>${esc(leagueName(slug))}</h1><p id="lgSeason"></p></div>
     </div>
-    ${tabs('league', [['table', 'جدول'], ['fixtures', 'بازی‌ها'], ['leaders', 'برترین‌ها'], ['news', 'اخبار']], q.tab || 'table')}
+    ${tabs('league', [['table', 'جدول'], ['fixtures', 'بازی‌ها'], ['leaders', 'برترین‌ها']], q.tab || 'table')}
     <div id="leagueBody"></div>`;
-  API.leagueCalendar(slug).then(l => { if (l) el.querySelector('#lgSeason').textContent = `${l.name || ''} · ${l.season?.displayName || l.season?.year || ''}`; }).catch(() => {});
+  API.leagueCalendar(slug).then(l => {
+    if (!l) return;
+    el.querySelector('#lgSeason').textContent = `${l.name || ''} · فصل ${l.season?.displayName || ''}`;
+    if (!CONFIG.LEAGUES.some(x => x.id === String(slug))) el.querySelector('h1').textContent = l.name;
+  }).catch(() => {});
 
   bindTabs(el, 'league', '#leagueBody', {
     table: async () => {
@@ -75,7 +89,6 @@ Views.league = async (el, { id: slug }, q) => {
     },
     fixtures: async () => leagueWeek(el, slug, 0),
     leaders: async () => leadersView(await API.leaders(slug)),
-    news: async () => newsList(await API.news(slug)),
   }, q.tab || 'table');
 };
 
@@ -130,11 +143,11 @@ function standingsTable(entries, mini = false, highlight = '', title = '') {
   </div>`;
 }
 
-// ESPN league statistics: every leader category it returns (goals, assists, ...).
-const LEADER_FA = { goalsLeaders: '⚽ گلزنان', assistsLeaders: '🎯 پاسورها', 'Top Scorers': '⚽ گلزنان', 'Top Assists': '🎯 پاسورها' };
+// League leader boards: every top-scorer category the data source returns (goals, assists, cards).
+const LEADER_FA = { goalsLeaders: '⚽ گلزنان', assistsLeaders: '🎯 پاسورها', yellowLeaders: '🟨 کارت زرد', redLeaders: '🟥 کارت قرمز' };
 function leadersView(stats) {
   const cats = (stats || []).filter(c => c.leaders?.length);
-  if (!cats.length) return empty('ESPN برای این رقابت آمار برترین‌ها منتشر نکرده');
+  if (!cats.length) return empty('برای این رقابت آمار برترین‌ها منتشر نشده');
   return `<div class="leaders">${cats.map(c => `<div class="card leader"><div class="card-head"><b>${LEADER_FA[c.name] || LEADER_FA[c.displayName] || esc(c.displayName || c.name)}</b></div>
     ${c.leaders.slice(0, 10).map((l, i) => {
       const a = l.athlete || {};
@@ -159,9 +172,8 @@ Views.match = async (el, { league, id }, q) => {
   el.innerHTML = loader();
   let s;
   try { s = await API.summary(league, id); } catch (err) { el.innerHTML = errorBox(err); return; }
-  if (!s?.header) { el.innerHTML = empty('بازی پیدا نشد'); return; }
-  const e = API.normEvent(s.header, { slug: s.header.league?.slug || league, name: s.header.league?.name, logo: s.header.league?.logos?.[0]?.href });
-  e.league = league;
+  if (!s?.__event) { el.innerHTML = empty('بازی پیدا نشد'); return; }
+  const e = s.__event;
 
   if (hasMadrid(e)) document.body.classList.add('madrid');
   if (hasMadrid(e) && isUpcoming(e)) return MadridViews.preview(el, e, s);
@@ -201,7 +213,7 @@ function matchHeader(e, s) {
         ${e.home.shootout != null ? `<small>پنالتی ${scoreHtml(e.home.shootout, e.away.shootout)}</small>` : ''}</div>`;
   const gi = s.gameInfo || {};
   return `<div class="hero match-hero">
-    <a class="mh-league" href="#/league/${e.league}">${img(leagueLogo(e.league), 'logo-xs')} ${esc(leagueName(e.league, e.leagueName))}</a>
+    <a class="mh-league" href="#/league/${e.league}">${img(e.leagueLogo || leagueLogo(e.league), 'logo-xs')} ${esc(leagueName(e.league, e.leagueName))}${e.round ? ' · هفته ' + fa(e.round) : ''}</a>
     <div class="mh-main">
       <a class="mh-team" href="${teamHref(e.league, e.home.id)}">${img(e.home.logo || teamLogo(e.home.id), 'logo-xl')}<b>${esc(e.home.name)}</b><div class="mh-goals">${goals('home')}</div></a>
       ${center}
@@ -290,7 +302,7 @@ function lineupsView(hr, ar) {
   return pitch(hr, ar) + (hr && ar ? `<div class="two-col">${side(hr)}${side(ar)}</div>` : '');
 }
 
-// Every per-player stat ESPN returns, as columns.
+// Every per-player match stat the data source returns, as columns.
 function playersView(rosters) {
   return rosters.filter(Boolean).map(r => {
     const players = r.roster.filter(p => p.starter || p.subbedIn);
@@ -339,8 +351,9 @@ function h2hView(e, s) {
     }).join('')}</div>`;
 }
 
-// Implied win probabilities from the first bookmaker line ESPN returns.
+// Result probabilities: Sportmonks predictions, or implied odds when a bookmaker line is present.
 function oddsProb(s) {
+  if (s.__prob) return { ...s.__prob, overUnder: null, details: '' };
   const o = (s.pickcenter || s.odds || [])[0];
   if (!o) return null;
   const ml = (x) => { const v = Number(x?.moneyLine ?? x?.current?.moneyLine?.american ?? x?.odds?.value); return isNaN(v) || !v ? null : v; };
@@ -364,7 +377,7 @@ function pregameView(e, s) {
   let html = '';
   const p = oddsProb(s);
   if (p) {
-    html += `<div class="card predict"><div class="card-head"><b>شانس هر نتیجه</b><small>بر اساس ضرایب ${esc(p.provider)}</small></div>
+    html += `<div class="card predict"><div class="card-head"><b>شانس هر نتیجه</b><small>پیش‌بینی ${esc(p.provider)}</small></div>
       <div class="win-prob">
         <div style="flex:${p.home}" class="wp home"><b>${pct(p.home)}</b><small>${esc(e.home.short)}</small></div>
         ${p.draw ? `<div style="flex:${p.draw}" class="wp draw"><b>${pct(p.draw)}</b><small>مساوی</small></div>` : ''}
@@ -393,12 +406,13 @@ Views.team = async (el, { league, id }, q) => {
   catch (err) { el.innerHTML = errorBox(err); return; }
   if (!t) { el.innerHTML = empty('تیم پیدا نشد'); return; }
   const done = all.filter(isDone), next = all.filter(x => isUpcoming(x) || isLive(x));
+  league = mainLeague(all, t) || league;
 
   el.innerHTML = `<div class="hero team-hero" style="${t.color ? `--team:#${esc(t.color)}` : ''}">
       ${img(API.logoOf(t) || teamLogo(id), 'logo-xl')}
       <div><h1>${esc(t.displayName)}</h1><p>${esc(t.standingSummary || '')}${t.record?.items?.[0]?.summary ? ' · ' + fa(t.record.items[0].summary) : ''}</p>${formChips(done.slice(-5).map(x => resultFor(x, id)))}</div>
     </div>
-    ${tabs('team', [['overview', 'نمای کلی'], ['fixtures', 'بازی‌ها'], ['stats', 'آمار تیمی'], ['squad', 'بازیکنان'], ['news', 'اخبار']], q.tab || 'overview')}
+    ${tabs('team', [['overview', 'نمای کلی'], ['fixtures', 'بازی‌ها'], ['stats', 'آمار تیمی'], ['squad', 'بازیکنان'], ['injuries', 'مصدومان']], q.tab || 'overview')}
     <div id="teamBody"></div>`;
 
   bindTabs(el, 'team', '#teamBody', {
@@ -418,9 +432,18 @@ Views.team = async (el, { league, id }, q) => {
       <div class="card"><div class="card-head"><b>نتایج فصل</b></div>${done.slice().reverse().map(matchRow).join('') || empty('—')}</div>`,
     stats: async () => teamStatsView(id, done, t),
     squad: async () => squadView(await API.roster(league, id)),
-    news: async () => newsList(await API.news(league, id)),
+    injuries: async () => injuriesView(await API.roster(league, id), t.displayName),
   }, q.tab || 'overview');
 };
+
+// The team's domestic league: the competition it plays most often this season.
+function mainLeague(all, t) {
+  const n = {};
+  all.forEach(e => { n[e.league] = (n[e.league] || 0) + 1; });
+  const active = (t?.activeSeasons || []).map(x => String(x.league_id ?? x.league?.id)).filter(Boolean);
+  const domestic = active.find(id => (t.activeSeasons.find(x => String(x.league_id ?? x.league?.id) === id)?.league?.sub_type || '') === 'domestic');
+  return domestic || Object.entries(n).sort((a, b) => b[1] - a[1])[0]?.[0];
+}
 
 function nextMatchCard(e) {
   return `<a class="card next-card ${hasMadrid(e) ? 'is-madrid' : ''}" href="${matchHref(e)}">
@@ -434,7 +457,7 @@ function nextMatchCard(e) {
   </a>`;
 }
 
-// Season numbers computed from results, split by competition and home/away, plus ESPN's record items.
+// Season numbers computed from results, split by competition and home/away.
 function seasonTally(list, id) {
   const t = { n: 0, W: 0, D: 0, L: 0, gf: 0, ga: 0, cs: 0, fts: 0 };
   list.forEach(e => {
@@ -474,10 +497,10 @@ function teamStatsView(id, done, team, accent = '') {
       <div class="card ${accent}"><div class="card-head"><b>بزرگ‌ترین بردها</b></div>${big.slice(0, 3).map(matchRow).join('') || empty('—')}</div>
       <div class="card ${accent}"><div class="card-head"><b>بدترین نتایج</b></div>${big.slice(-3).reverse().filter(e => resultFor(e, id) !== 'W').map(matchRow).join('') || empty('بدون باخت!')}</div>
     </div>
-    ${recItems.length ? `<div class="card ${accent}"><div class="card-head"><b>رکورد رسمی ESPN</b></div><div class="kv-grid">${recItems.filter(s => REC_FA[s.name]).map(s => `<div class="kv"><span>${REC_FA[s.name]}${s.group && s.group !== 'Overall Record' ? ` <small>(${esc(s.group)})</small>` : ''}</span><b>${fa(Math.round((s.value ?? 0) * 100) / 100)}</b></div>`).join('')}</div></div>` : ''}`;
+    ${recItems.length ? `<div class="card ${accent}"><div class="card-head"><b>رکورد رسمی</b></div><div class="kv-grid">${recItems.filter(s => REC_FA[s.name]).map(s => `<div class="kv"><span>${REC_FA[s.name]}${s.group && s.group !== 'Overall Record' ? ` <small>(${esc(s.group)})</small>` : ''}</span><b>${fa(Math.round((s.value ?? 0) * 100) / 100)}</b></div>`).join('')}</div></div>` : ''}`;
 }
 
-// Flatten whatever per-season stats ESPN attaches to a roster athlete.
+// Flatten the per-season stats attached to a roster athlete.
 function athleteSeasonStats(a) {
   const out = {};
   const cats = a.statistics?.splits?.categories || a.statistics?.categories || [];
@@ -564,28 +587,22 @@ function categoryTable(c) {
 }
 
 /* ---------- Search ---------- */
-const DOMESTIC = ['eng.1', 'esp.1', 'ita.1', 'ger.1', 'fra.1', 'por.1', 'ned.1', 'ksa.1'];
 Views.search = async (el, _p, q) => {
   el.innerHTML = `<div class="search-box"><input id="q" type="search" placeholder="نام تیم یا بازیکن به انگلیسی…" value="${esc(q.q || '')}" dir="auto" autofocus></div><div id="results"></div>`;
   const input = el.querySelector('#q'), out = el.querySelector('#results');
   let timer;
   const run = async () => {
     const s = input.value.trim();
-    if (s.length < 2) { out.innerHTML = empty('مثلاً: Real Madrid ، Vinicius ، Bellingham'); return; }
+    if (s.length < 3) { out.innerHTML = empty('حداقل ۳ حرف، مثلاً: Real Madrid ، Vinicius ، Bellingham'); return; }
     history.replaceState(null, '', '#/search?q=' + encodeURIComponent(s));
     out.innerHTML = loader();
     try {
-      const needle = s.toLowerCase();
-      const teamLists = await Promise.all(DOMESTIC.map(slug => API.leagueTeams(slug).then(ts => ts.map(t => ({ ...t, __league: slug }))).catch(() => [])));
-      const teams = teamLists.flat().filter(t => [t.displayName, t.shortDisplayName, t.name, t.nickname, t.abbreviation].some(n => String(n || '').toLowerCase().includes(needle))).slice(0, 20);
-      const res = await API.search(s).catch(() => []);
-      const players = res.filter(r => /player|athlete/i.test(r.type)).flatMap(r => r.contents || [])
-        .map(c => ({ ...c, id: (String(c.uid || '').match(/a:(\d+)/) || [])[1] })).filter(c => c.id).slice(0, 20);
+      const [teams, players] = await Promise.all([API.searchTeams(s), API.searchPlayers(s)]);
       out.innerHTML = `<div class="two-col">
         <div class="card"><div class="card-head"><b>تیم‌ها</b><small>${fa(teams.length)}</small></div>
-          ${teams.map(t => `<a class="board-row" href="${teamHref(t.__league, t.id)}">${img(API.logoOf(t) || teamLogo(t.id), 'logo-md')}<span class="br-name"><b>${esc(t.displayName)}</b><small>${esc(leagueName(t.__league))}</small></span></a>`).join('') || empty('تیمی در لیگ‌های اصلی پیدا نشد')}</div>
+          ${teams.slice(0, 20).map(t => `<a class="board-row" href="${teamHref('', t.id)}">${img(API.logoOf(t) || teamLogo(t.id), 'logo-md')}<span class="br-name"><b>${esc(t.name)}</b><small>${esc(t.country?.name || '')}</small></span></a>`).join('') || empty('—')}</div>
         <div class="card"><div class="card-head"><b>بازیکنان</b><small>${fa(players.length)}</small></div>
-          ${players.map(p => `<a class="board-row" href="#/player/${p.id}">${img(p.image?.default || playerPhoto(p.id), 'avatar')}<span class="br-name"><b>${esc(p.displayName || '')}</b><small>${esc(p.subtitle || p.description || '')}</small></span></a>`).join('') || empty('—')}</div>
+          ${players.slice(0, 20).map(p => `<a class="board-row" href="#/player/${p.id}">${img(API.logoOf(p) || playerPhoto(p.id), 'avatar')}<span class="br-name"><b>${esc(p.display_name || p.name)}</b><small>${esc(p.nationality?.name || '')}${p.position?.name ? ' · ' + esc(p.position.name) : ''}</small></span></a>`).join('') || empty('—')}</div>
       </div>`;
     } catch (err) { out.innerHTML = errorBox(err); }
   };

@@ -1,4 +1,4 @@
-// Shared formatting helpers and small HTML components (ESPN data, normalised in api.js).
+// Shared formatting helpers and small HTML components (Sportmonks data, normalised in api.js).
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fa = (v) => String(v ?? '').replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
 const num = (v, dflt = '-') => (v === null || v === undefined || v === '') ? dflt : fa(v);
@@ -39,7 +39,7 @@ const POS_FA = { G: 'دروازه‌بان', GK: 'دروازه‌بان', D: 'م
   'Center Forward': 'مهاجم نوک', 'Left Wing': 'وینگر چپ', 'Right Wing': 'وینگر راست', 'Center Midfielder': 'هافبک میانی', Striker: 'مهاجم' };
 const posFa = (p) => POS_FA[p?.displayName] || POS_FA[p?.name] || POS_FA[p?.abbreviation] || esc(p?.displayName || p?.name || p?.abbreviation || '');
 
-// ESPN team statistic names → Persian labels (unknown names fall back to ESPN's own label).
+// Statistic names → Persian labels (unknown names fall back to the source's own label).
 const STAT_FA = {
   possessionPct: 'مالکیت توپ', totalShots: 'کل شوت‌ها', shotsOnTarget: 'شوت در چارچوب', shotPct: 'دقت شوت', wonCorners: 'کرنر', foulsCommitted: 'خطا',
   offsides: 'آفساید', yellowCards: 'کارت زرد', redCards: 'کارت قرمز', saves: 'سیو', totalPasses: 'کل پاس‌ها', accuratePasses: 'پاس دقیق', passPct: 'دقت پاس',
@@ -47,18 +47,26 @@ const STAT_FA = {
   blockedShots: 'شوت مهارشده', effectiveTackles: 'تکل موفق', totalTackles: 'تکل', tacklePct: 'درصد تکل موفق', interceptions: 'توپ‌ربایی',
   effectiveClearance: 'دفع موفق', totalClearance: 'دفع توپ', penaltyKickGoals: 'گل پنالتی', penaltyKickShots: 'پنالتی', expectedGoals: 'گل مورد انتظار (xG)',
   goalAssists: 'پاس گل', totalGoals: 'گل', goalsConceded: 'گل خورده', shotsFaced: 'شوت دریافتی', foulsSuffered: 'خطا روی بازیکن',
-  appearances: 'بازی', subIns: 'تعویضی', ownGoals: 'گل به خودی', cleanSheet: 'کلین‌شیت', minutes: 'دقیقه',
+  appearances: 'بازی', subIns: 'تعویضی', ownGoals: 'گل به خودی', cleanSheet: 'کلین‌شیت', minutes: 'دقیقه', rating: 'نمره',
+  KEY_PASSES: 'پاس کلیدی', DRIBBLE_ATTEMPTS: 'تلاش دریبل', SUCCESSFUL_DRIBBLES: 'دریبل موفق', DUELS_WON: 'دوئل برده', TOTAL_DUELS: 'دوئل',
+  AERIALS_WON: 'دوئل هوایی برده', DISPOSSESSED: 'از دست دادن توپ', TOUCHES: 'لمس توپ', BIG_CHANCES_CREATED: 'موقعیت ساخته‌شده', BIG_CHANCES_MISSED: 'موقعیت از دست‌رفته',
+  SHOTS_OFF_TARGET: 'شوت خارج چارچوب', HIT_WOODWORK: 'برخورد به تیرک', DRIBBLED_PAST: 'دریبل‌خورده', BLOCKED_SHOTS: 'شوت مهارشده', ATTACKS: 'حمله',
+  DANGEROUS_ATTACKS: 'حمله خطرناک', SHOTS_INSIDEBOX: 'شوت از داخل محوطه', SHOTS_OUTSIDEBOX: 'شوت از بیرون محوطه', SUCCESSFUL_PASSES: 'پاس موفق',
+  GOAL_KICKS: 'ضربه دروازه', THROWINS: 'پرتاب اوت', FREE_KICKS: 'ضربه آزاد', PENALTIES: 'پنالتی', SUBSTITUTIONS: 'تعویض', INJURIES: 'مصدومیت',
+  BALL_SAFE: 'توپ در اختیار', COUNTER_ATTACKS: 'ضدحمله', HEADERS: 'ضربه سر', CHALLENGES: 'چالش', LONG_PASSES: 'پاس بلند', SUCCESSFUL_LONG_PASSES: 'پاس بلند موفق',
+  TACKLES: 'تکل', SAVES_INSIDE_BOX: 'سیو داخل محوطه', PUNCHES: 'مشت‌زدن', ERROR_LEAD_TO_GOAL: 'خطای منجر به گل', LAST_MAN_TACKLE: 'تکل آخرین مدافع',
+  CAPTAIN: 'کاپیتان', FOULS_DRAWN: 'خطا روی بازیکن', BALL_RECOVERY: 'بازپس‌گیری', BLOCKS: 'دفع', EXPECTED_ASSISTS: 'پاس گل مورد انتظار',
+  LINEUPS: 'ترکیب اصلی', BENCH: 'نیمکت', SUBSTITUTED_IN: 'تعویضی وارد', SUBSTITUTED_OUT: 'تعویضی خارج', MINUTES: 'دقیقه', PASSES_IN_FINAL_THIRD: 'پاس در یک‌سوم پایانی',
 };
 const statLabel = (s) => STAT_FA[s.name] || esc(s.label || s.displayName || s.shortDisplayName || s.name);
 
 const img = (src, cls = '', alt = '') => src ? `<img class="${cls}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" onerror="this.style.visibility='hidden'">` : `<span class="${cls} img-ph"></span>`;
-const teamLogo = (id) => `https://a.espncdn.com/i/teamlogos/soccer/500/${id}.png`;
-const playerPhoto = (id) => `https://a.espncdn.com/i/headshots/soccer/players/full/${id}.png`;
-// ESPN league logos are keyed by numeric league id.
-const LEAGUE_NUM = { 'esp.1': 15, 'eng.1': 23, 'ita.1': 12, 'ger.1': 10, 'fra.1': 9, 'uefa.champions': 2, 'uefa.europa': 2310, 'uefa.europa.conf': 20296,
-  'esp.copa_del_rey': 80, 'por.1': 14, 'ned.1': 11, 'fifa.world': 4, 'uefa.euro': 74, 'eng.fa': 40, 'uefa.nations': 2395, 'esp.super_cup': 431, 'ksa.1': 2488, 'fifa.cwc': 1932 };
-const leagueLogo = (slug) => LEAGUE_NUM[slug] ? `https://a.espncdn.com/i/leaguelogos/soccer/500/${LEAGUE_NUM[slug]}.png` : '';
-const leagueName = (slug, fallback = '') => CONFIG.LEAGUES.find(l => l.id === slug)?.name || fallback || slug;
+// Sportmonks CDN keeps images in folders numbered id % 32.
+const smImg = (kind, id) => id ? `https://cdn.sportmonks.com/images/soccer/${kind}/${Number(id) % 32}/${id}.png` : '';
+const teamLogo = (id) => smImg('teams', id);
+const playerPhoto = (id) => smImg('players', id);
+const leagueLogo = (id) => smImg('leagues', id);
+const leagueName = (id, fallback = '') => CONFIG.LEAGUES.find(l => l.id === String(id))?.name || fallback || String(id);
 
 function ratingClass(r) {
   r = parseFloat(r);
@@ -118,7 +126,10 @@ const empty = (msg) => `<div class="empty">${msg}</div>`;
 function errorBox(err) {
   const m = String(err?.message || err);
   let hint = '';
-  if (/HTTP 5\d\d/.test(m)) hint = 'سرور واسط به ESPN نرسید. چند لحظه بعد صفحه را دوباره باز کنید.';
+  if (/HTTP 401|token/i.test(m)) hint = 'کلید Sportmonks تنظیم نشده یا نامعتبر است. از ⚙ تنظیمات کلید را وارد کنید.';
+  else if (/HTTP 403|access|plan|subscription/i.test(m)) hint = 'پلن Sportmonks شما به این بخش یا این لیگ دسترسی ندارد.';
+  else if (/HTTP 429|limit/i.test(m)) hint = 'سقف درخواست ساعتی Sportmonks پر شده؛ کمی بعد دوباره امتحان کنید.';
+  else if (/HTTP 5\d\d/.test(m)) hint = 'سرور واسط به Sportmonks نرسید. چند لحظه بعد صفحه را دوباره باز کنید.';
   else if (/Failed to fetch|NetworkError|Unexpected token/i.test(m)) hint = 'سایت را با node server.js یا روی Vercel اجرا کنید؛ باز کردن مستقیم فایل HTML کار نمی‌کند.';
   return `<div class="error-box"><b>خطا در دریافت داده</b><code dir="ltr">${esc(m)}</code>${hint ? `<p>${hint}</p>` : ''}</div>`;
 }
@@ -157,7 +168,7 @@ function statCompare(label, h, a, hv, av) {
 
 const statTile = (value, label, sub = '') => `<div class="stat-tile"><b>${value}</b><span>${label}</span>${sub ? `<small>${sub}</small>` : ''}</div>`;
 
-// ESPN rosters: starters carry formationPlace 1..11 (1 = keeper) in formation-line order.
+// Rosters: starters carry formationPlace 1..11 (1 = keeper) in formation-line order.
 function formationRows(side) {
   const xi = (side.roster || []).filter(p => p.starter).sort((a, b) => Number(a.formationPlace || 99) - Number(b.formationPlace || 99));
   const lines = String(side.formation || '4-4-2').split('-').map(Number).filter(Boolean);
@@ -174,8 +185,9 @@ function pitchPlayer(p, x, y, cls) {
   const a = p.athlete || {};
   const g = statOf(p, 'totalGoals'), yc = statOf(p, 'yellowCards'), rc = statOf(p, 'redCards');
   const marks = `${'⚽'.repeat(Math.min(g, 3))}${yc ? '🟨' : ''}${rc ? '🟥' : ''}${p.subbedOut ? '🔻' : ''}`;
+  const r = statOf(p, 'rating');
   return `<a class="pp ${cls}" href="#/player/${a.id}" style="left:${x}%;top:${y}%">
-    <span class="pp-img">${img(a.headshot?.href || playerPhoto(a.id), '', a.displayName)}${marks ? `<span class="pp-marks">${marks}</span>` : ''}</span>
+    <span class="pp-img">${img(a.headshot?.href || playerPhoto(a.id), '', a.displayName)}${r ? rating(r) : ''}${marks ? `<span class="pp-marks">${marks}</span>` : ''}</span>
     <span class="pp-name"><i>${fa(p.jersey ?? '')}</i> ${esc(shortName(a.shortName || a.displayName))}</span>
   </a>`;
 }
