@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<title>video-use reel</title>
+<style>
+  @font-face { font-family: 'Vazir'; font-weight: 400; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-arabic-400-normal.woff2); }
+  @font-face { font-family: 'Vazir'; font-weight: 500; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-arabic-500-normal.woff2); }
+  @font-face { font-family: 'Vazir'; font-weight: 700; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-arabic-700-normal.woff2); }
+  @font-face { font-family: 'Vazir'; font-weight: 900; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-arabic-900-normal.woff2); }
+  @font-face { font-family: 'Vazir'; font-weight: 400; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-latin-400-normal.woff2); unicode-range: U+0000-00FF; }
+  @font-face { font-family: 'Vazir'; font-weight: 700; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-latin-700-normal.woff2); unicode-range: U+0000-00FF; }
+  @font-face { font-family: 'Serif'; font-weight: 400; src: url(/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff2); }
+  @font-face { font-family: 'Serif'; font-weight: 600; src: url(/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-600-normal.woff2); }
+  @font-face { font-family: 'Serif'; font-weight: 400; font-style: italic; src: url(/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-italic.woff2); }
+  @font-face { font-family: 'Mono'; font-weight: 400; src: url(/node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2); }
+  @font-face { font-family: 'Mono'; font-weight: 700; src: url(/node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2); }
+
+  :root {
+    --bg: #161512; --bg2: #1f1d19; --card: #262420; --line: #3a372f;
+    --cream: #f4efe6; --sand: #c9bfae; --muted: #8c8577;
+    --coral: #d97757; --coral2: #f0a383; --sage: #9fb59a;
+  }
+  * { box-sizing: border-box; }
+  use { color: #d97757; }
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); color: var(--cream); }
+  #root { position: absolute; inset: 0; overflow: hidden; }
+  #glow { position: absolute; inset: -200px; background:
+            radial-gradient(700px 700px at var(--gx, 50%) var(--gy, 38%), rgba(217,119,87,.20), transparent 70%),
+            radial-gradient(900px 900px at 80% 95%, rgba(159,181,154,.07), transparent 70%); }
+  #grain { position: absolute; inset: 0; opacity: .07; mix-blend-mode: overlay; }
+  .scene { position: absolute; left: 0; top: 0; width: 1080px; height: 1300px; opacity: 0; will-change: transform, opacity, filter; }
+  .fa { font-family: 'Vazir'; direction: rtl; }
+  .mono { font-family: 'Mono'; }
+  .serif { font-family: 'Serif'; }
+  .abs { position: absolute; }
+  .center-x { left: 0; right: 0; text-align: center; }
+
+  /* brand row (top) */
+  #brand { position: absolute; top: 150px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 16px;
+           font-family: 'Mono'; font-size: 26px; letter-spacing: .12em; color: var(--sand); opacity: 0; }
+  #brand svg { width: 34px; height: 34px; }
+
+  /* captions */
+  #cap { position: absolute; left: 70px; right: 70px; top: 1330px; height: 260px; display: flex; align-items: flex-start; justify-content: center; }
+  #cap .line { font-family: 'Vazir'; direction: rtl; font-weight: 800; font-size: 62px; line-height: 1.55; text-align: center; color: var(--cream); }
+  #cap .wd { display: inline-block; opacity: 0; transform: translateY(18px); margin: 0 .12em; }
+  #cap .wd.hl { color: var(--coral2); }
+  #capbar { position: absolute; left: 50%; top: 1300px; width: 64px; height: 4px; margin-left: -32px; border-radius: 4px; background: var(--coral); opacity: 0; }
+
+  /* generic UI */
+  .card { position: absolute; background: var(--card); border: 2px solid var(--line); border-radius: 36px; }
+  .pill { display: inline-block; padding: 14px 30px; border-radius: 999px; border: 2px solid var(--line); background: var(--bg2); }
+  .label { font-family: 'Mono'; font-size: 26px; color: var(--muted); letter-spacing: .06em; }
+
+  /* hook */
+  #s-hook .big { top: 330px; font-family: 'Vazir'; direction: rtl; font-weight: 900; font-size: 120px; line-height: 1.25; }
+  #s-hook .big .c { color: var(--coral); }
+  #chatbar { left: 90px; right: 90px; top: 860px; height: 150px; display: flex; align-items: center; padding: 0 44px; gap: 22px; }
+  #chatbar .prompt { color: var(--coral); font-family: 'Mono'; font-size: 40px; }
+  #chatbar .txt { font-family: 'Mono'; font-size: 38px; color: var(--cream); white-space: pre; }
+  #chatbar .cur { display: inline-block; width: 18px; height: 44px; background: var(--coral); vertical-align: middle; margin-left: 4px; }
+  #chatbar .send { margin-left: auto; width: 76px; height: 76px; border-radius: 22px; background: var(--coral); display: flex; align-items: center; justify-content: center; }
+
+  /* intro */
+  #s-intro .title { top: 250px; font-family: 'Serif'; font-weight: 600; font-size: 168px; letter-spacing: -0.03em; }
+  #s-intro .sub { top: 460px; font-family: 'Mono'; font-size: 30px; color: var(--sand); letter-spacing: .1em; }
+  .step { position: absolute; width: 280px; height: 380px; top: 640px; }
+  .step .ic { position: absolute; left: 0; right: 0; top: 0; height: 260px; display: flex; align-items: center; justify-content: center; }
+  .step .nm { position: absolute; left: 0; right: 0; top: 280px; text-align: center; font-family: 'Vazir'; font-weight: 700; font-size: 38px; direction: rtl; }
+  .step .en { position: absolute; left: 0; right: 0; top: 338px; text-align: center; font-family: 'Mono'; font-size: 22px; color: var(--muted); }
+  .arrow { position: absolute; top: 760px; width: 70px; height: 24px; }
+  .clip { position: absolute; width: 96px; height: 64px; border-radius: 10px; }
+  .bubble { position: absolute; border-radius: 26px; padding: 18px 24px; font-family: 'Mono'; font-size: 20px; line-height: 1.3; }
+
+  /* cuts */
+  #wave { position: absolute; left: 70px; right: 70px; top: 560px; height: 300px; }
+  .seg { position: absolute; top: 0; height: 300px; border-radius: 22px; overflow: hidden; }
+  .seg canvas { position: absolute; inset: 0; }
+  .seg .tag { position: absolute; left: 0; right: 0; bottom: -64px; text-align: center; font-family: 'Mono'; font-size: 28px; }
+  #s-cuts .head, #s-polish .head, #s-reads .head, #s-tokens .head, #s-self .head, #s-cta .head {
+    top: 300px; font-family: 'Vazir'; direction: rtl; font-weight: 900; font-size: 86px; line-height: 1.3; }
+  .kick { font-family: 'Mono'; font-size: 26px; letter-spacing: .14em; color: var(--coral2); }
+
+  /* polish */
+  #frame { left: 150px; width: 780px; top: 500px; height: 440px; border-radius: 30px; overflow: hidden; border: 2px solid var(--line); }
+  #frame .scene-img { position: absolute; inset: 0; }
+  #frame .sub { position: absolute; left: 0; right: 0; bottom: 34px; text-align: center; font-family: 'Vazir'; font-weight: 900; font-size: 50px; color: #fff;
+                text-shadow: 0 4px 0 rgba(0,0,0,.45); letter-spacing: .02em; }
+  #frame .sub span { background: var(--coral); padding: 2px 18px; border-radius: 10px; }
+  .chips { position: absolute; top: 1010px; left: 0; right: 0; display: flex; justify-content: center; gap: 22px; direction: rtl; }
+  .chip { font-family: 'Vazir'; font-weight: 700; font-size: 36px; padding: 16px 34px; border-radius: 999px; border: 2px solid var(--line); background: var(--bg2); color: var(--muted); }
+  .chip.on { border-color: var(--coral); color: var(--cream); background: rgba(217,119,87,.14); }
+
+  /* reads */
+  #strip { left: 90px; top: 560px; width: 900px; height: 520px; }
+  .fr { position: absolute; width: 150px; height: 100px; border-radius: 12px; }
+  .tline { position: absolute; left: 0; font-family: 'Mono'; font-size: 29px; color: var(--sand); white-space: pre; direction: ltr; }
+  .tline b { color: var(--coral2); font-weight: 400; }
+
+  /* tokens */
+  .bar { position: absolute; left: 110px; height: 90px; border-radius: 18px; }
+  .num { position: absolute; left: 110px; font-family: 'Serif'; font-weight: 600; letter-spacing: -0.02em; }
+  .numlab { position: absolute; font-family: 'Vazir'; direction: rtl; font-weight: 700; font-size: 34px; color: var(--muted); }
+
+  /* self-eval pipeline */
+  .node { position: absolute; left: 250px; width: 580px; height: 104px; border-radius: 26px; display: flex; align-items: center; gap: 26px; padding: 0 36px;
+          background: var(--card); border: 2px solid var(--line); font-family: 'Mono'; font-size: 34px; color: var(--sand); }
+  .node .dot { width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--line); display: flex; align-items: center; justify-content: center; flex: none; }
+  .node.on { border-color: rgba(217,119,87,.7); color: var(--cream); }
+  .node.on .dot { border-color: var(--coral); background: var(--coral); }
+
+  /* oss */
+  #s-oss .pct { top: 330px; font-family: 'Serif'; font-weight: 600; font-size: 300px; letter-spacing: -0.04em; }
+  #s-oss .os { top: 680px; font-family: 'Vazir'; direction: rtl; font-weight: 900; font-size: 110px; }
+  #s-oss .repo { top: 880px; }
+
+  /* cta */
+  #cbox { left: 80px; right: 80px; top: 640px; height: 170px; border-radius: 85px; display: flex; align-items: center; padding: 0 30px; gap: 24px; direction: rtl; }
+  #cbox .av { width: 106px; height: 106px; border-radius: 50%; background: linear-gradient(135deg, var(--coral), #b85a3d); flex: none; display: flex; align-items: center; justify-content: center; }
+  #cbox .in { font-family: 'Vazir'; font-weight: 800; font-size: 64px; color: var(--cream); white-space: pre; }
+  #cbox .ph { font-family: 'Vazir'; font-weight: 500; font-size: 44px; color: var(--muted); position: absolute; right: 166px; }
+  #cbox .cur { display: inline-block; width: 6px; height: 64px; background: var(--coral); vertical-align: middle; margin-right: 6px; }
+  #cbox .post { margin-right: auto; font-family: 'Vazir'; font-weight: 800; font-size: 40px; color: var(--coral); padding-left: 20px; }
+  #posted { left: 80px; right: 80px; top: 870px; display: flex; gap: 22px; align-items: flex-start; direction: rtl; }
+  #posted .av { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--coral), #b85a3d); flex: none; }
+  #posted .bd { background: var(--bg2); border: 2px solid var(--line); border-radius: 30px; padding: 18px 30px; }
+  #posted .nm { font-family: 'Mono'; font-size: 24px; color: var(--muted); direction: ltr; text-align: right; }
+  #posted .tx { font-family: 'Vazir'; font-weight: 800; font-size: 54px; }
+  #heart { width: 70px; height: 70px; align-self: center; flex: none; }
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="glow"></div>
+  <canvas id="grain" width="540" height="960"></canvas>
+
+  <div id="brand"><svg viewBox="-50 -50 100 100"><use href="#spark"/></svg><span>VIDEO-USE</span></div>
+
+  <!-- 1 hook -->
+  <div class="scene" id="s-hook">
+    <svg class="abs" id="hookSpark" style="left:440px;top:170px;width:200px;height:200px" viewBox="-50 -50 100 100"><use href="#spark"/></svg>
+    <div class="abs center-x big"><div id="hk1">ویدیو رو تدوین کن</div><div id="hk2">فقط با <span class="c">چت</span></div></div>
+    <div class="card abs" id="chatbar"><span class="prompt">&gt;</span><span class="txt" id="chatTxt"></span><span class="cur" id="chatCur"></span>
+      <div class="send"><svg width="38" height="38" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" stroke="#161512" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+  </div>
+
+  <!-- 2 intro -->
+  <div class="scene" id="s-intro">
+    <div class="abs center-x title" id="inTitle">video<span style="color:var(--coral)">-</span>use</div>
+    <div class="abs center-x sub" id="inSub">EDIT VIDEOS WITH CLAUDE CODE</div>
+    <div class="step" id="st1" style="left:720px"><div class="ic" id="folder"></div><div class="nm">فیلم خام</div><div class="en">raw footage/</div></div>
+    <svg class="arrow" id="ar1" style="left:640px" viewBox="0 0 70 24"><path d="M68 12H6M16 2L4 12l12 10" stroke="#d97757" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+    <div class="step" id="st2" style="left:400px"><div class="ic" id="chatIc"></div><div class="nm">چت</div><div class="en">Claude Code</div></div>
+    <svg class="arrow" id="ar2" style="left:320px" viewBox="0 0 70 24"><path d="M68 12H6M16 2L4 12l12 10" stroke="#d97757" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+    <div class="step" id="st3" style="left:80px"><div class="ic" id="outIc"></div><div class="nm">خروجی نهایی</div><div class="en">final.mp4</div></div>
+  </div>
+
+  <!-- 3 cuts -->
+  <div class="scene" id="s-cuts">
+    <div class="abs center-x kick" style="top:250px">AUTO CUT</div>
+    <div class="abs center-x head">حذف مکث‌ها و <span style="color:var(--coral)">«اِممم»</span></div>
+    <div id="wave"></div>
+    <div class="abs center-x label" id="cutLab" style="top:960px;font-size:30px">00:42 → <span style="color:var(--coral2)">00:27</span></div>
+  </div>
+
+  <!-- 4 polish -->
+  <div class="scene" id="s-polish">
+    <div class="abs center-x kick" style="top:250px">GRADE · SUBTITLES · MOTION</div>
+    <div class="abs center-x head">خودکار، تمیز، حرفه‌ای</div>
+    <div class="abs" id="frame">
+      <svg class="scene-img" id="land" viewBox="0 0 780 440" preserveAspectRatio="none">
+        <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7aa0c4"/><stop offset="1" stop-color="#f2c79a"/></linearGradient></defs>
+        <rect width="780" height="440" fill="url(#sky)"/>
+        <circle id="sun" cx="560" cy="210" r="60" fill="#ffe2b0"/>
+        <path d="M0 300 Q140 210 300 280 T600 250 T780 270 V440 H0Z" fill="#5d7a63"/>
+        <path d="M0 360 Q200 300 420 350 T780 330 V440 H0Z" fill="#3f5a48"/>
+      </svg>
+      <div class="sub" id="polSub"><span>خیلی ساده‌ست</span></div>
+      <svg class="abs" id="polSpark" style="left:40px;top:34px;width:70px;height:70px" viewBox="-50 -50 100 100"><use href="#spark" style="color:#fff"/></svg>
+    </div>
+    <div class="chips"><div class="chip" id="ch1">رنگ‌بندی</div><div class="chip" id="ch2">زیرنویس</div><div class="chip" id="ch3">انیمیشن</div></div>
+  </div>
+
+  <!-- 5 reads -->
+  <div class="scene" id="s-reads">
+    <div class="abs center-x kick" style="top:250px">IT READS THE VIDEO</div>
+    <div class="abs center-x head">تماشا نمی‌کنه؛ <span style="color:var(--coral)">می‌خونه</span></div>
+    <div class="abs" id="strip"></div>
+  </div>
+
+  <!-- 6 tokens -->
+  <div class="scene" id="s-tokens">
+    <div class="abs center-x kick" style="top:250px">TOKENS</div>
+    <div class="abs center-x head">سبک‌تر، سریع‌تر</div>
+    <div class="num" id="n1" style="top:520px;font-size:120px;color:var(--muted)">45M</div>
+    <div class="numlab" id="l1" style="top:560px;right:110px">فریم به فریم</div>
+    <div class="bar" id="b1" style="top:680px;background:var(--line)"></div>
+    <svg class="abs" id="strike" style="left:100px;top:520px;width:880px;height:260px" viewBox="0 0 880 260"><path id="strikeP" d="M0 230 L620 70" stroke="#d97757" stroke-width="8" stroke-linecap="round" fill="none"/></svg>
+    <div class="num" id="n2" style="top:830px;font-size:170px;color:var(--coral)">12KB</div>
+    <div class="numlab" id="l2" style="top:890px;right:110px;color:var(--cream)">فقط متن</div>
+    <div class="bar" id="b2" style="top:1040px;background:var(--coral)"></div>
+  </div>
+
+  <!-- 7 self eval -->
+  <div class="scene" id="s-self">
+    <div class="abs center-x kick" style="top:250px">SELF-EVAL</div>
+    <div class="abs center-x head">قبل از تحویل، <span style="color:var(--coral)">چک</span> می‌کنه</div>
+    <div id="pipe"></div>
+    <svg class="abs" id="loop" style="left:0;top:0;width:1080px;height:1300px" viewBox="0 0 1080 1300"></svg>
+  </div>
+
+  <!-- 8 oss -->
+  <div class="scene" id="s-oss">
+    <div class="abs center-x pct" id="pct">100%</div>
+    <div class="abs center-x os">متن‌باز</div>
+    <div class="abs center-x repo"><span class="pill mono" style="font-size:34px;color:var(--sand)"><svg width="30" height="30" viewBox="-50 -50 100 100" style="vertical-align:-5px;margin-right:12px"><use href="#spark"/></svg>github · video-use</span></div>
+  </div>
+
+  <!-- 9 cta -->
+  <div class="scene" id="s-cta">
+    <div class="abs center-x kick" style="top:250px">WANT THE REPO?</div>
+    <div class="abs center-x head">لینک ریپو رو می‌خوای؟</div>
+    <div class="abs center-x fa" id="ctaSub" style="top:430px;font-weight:700;font-size:50px;color:var(--sand)">این کلمه رو کامنت کن</div>
+    <div class="card abs" id="cbox"><div class="av"><svg width="56" height="56" viewBox="-50 -50 100 100"><use href="#spark" style="color:#fff"/></svg></div>
+      <span class="ph" id="cph">یک کامنت بنویس…</span><span class="in" id="cIn"></span><span class="cur" id="cCur"></span><span class="post" id="cPost">ارسال</span></div>
+    <div class="abs" id="posted"><div class="av"></div><div class="bd"><div class="nm">you · now</div><div class="tx">میخوام</div></div>
+    <svg id="heart" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.2 0 3.6 1.3 5.2 3.1 1.6-1.8 3-3.1 5.2-3.1 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z" fill="#d97757"/></svg></div>
+    <svg class="abs" id="ctaArrow" style="left:500px;top:1080px;width:80px;height:140px" viewBox="0 0 80 140"><path d="M40 6V120M12 92l28 30 28-30" stroke="#d97757" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+
+  <div id="capbar"></div>
+  <div id="cap"></div>
+</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- hand-drawn 12-ray spark -->
+    <g id="spark" fill="currentColor"></g>
+  </defs>
+</svg>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>
