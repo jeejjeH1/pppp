@@ -30,14 +30,45 @@ def tts(text, model, path):
     return x
 
 
+def biquad(kind, f0, gain_db=0.0, q=0.707):
+    """RBJ cookbook peaking / shelf filters."""
+    A = 10 ** (gain_db / 40)
+    w = 2 * np.pi * f0 / SR
+    al = np.sin(w) / (2 * q)
+    c = np.cos(w)
+    if kind == 'peak':
+        b = [1 + al * A, -2 * c, 1 - al * A]; a = [1 + al / A, -2 * c, 1 - al / A]
+    elif kind == 'high':
+        sq = 2 * np.sqrt(A) * al
+        b = [A * ((A + 1) + (A - 1) * c + sq), -2 * A * ((A - 1) + (A + 1) * c), A * ((A + 1) + (A - 1) * c - sq)]
+        a = [(A + 1) - (A - 1) * c + sq, 2 * ((A - 1) - (A + 1) * c), (A + 1) - (A - 1) * c - sq]
+    else:  # low shelf
+        sq = 2 * np.sqrt(A) * al
+        b = [A * ((A + 1) - (A - 1) * c + sq), 2 * A * ((A - 1) - (A + 1) * c), A * ((A + 1) - (A - 1) * c - sq)]
+        a = [(A + 1) + (A - 1) * c + sq, -2 * ((A - 1) + (A + 1) * c), (A + 1) + (A - 1) * c - sq]
+    return np.array(b) / a[0], np.array(a) / a[0]
+
+
+def compress(x, thr_db=-20, ratio=3.0, att=0.005, rel=0.12):
+    env = np.abs(x)
+    ka, kr = np.exp(-1 / (att * SR)), np.exp(-1 / (rel * SR))
+    e = signal.lfilter([1 - kr], [1, -kr], env)  # smooth release-ish follower
+    e = np.maximum(e, signal.lfilter([1 - ka], [1, -ka], env))
+    lvl = 20 * np.log10(e + 1e-9)
+    gr = np.minimum(0, (thr_db - lvl) * (1 - 1 / ratio))
+    return x * 10 ** (gr / 20)
+
+
 def voice_chain(x):
-    b, a = signal.butter(2, 85 / (SR / 2), 'high')
+    # Piper's raw output is very bottom-heavy (boxy "small room" sound): thin out the low-mids, open up the top.
+    b, a = signal.butter(2, 110 / (SR / 2), 'high')
     x = signal.lfilter(b, a, x)
-    # gentle presence lift around 3 kHz
-    b, a = signal.iirpeak(3200 / (SR / 2), 1.2)
-    x = x + 0.25 * signal.lfilter(b, a, x)
-    # soft compression
-    x = np.tanh(x * 2.2) / np.tanh(2.2)
+    for kind, f0, g, q in [('low', 220, -5, 0.7), ('peak', 380, -4, 1.1), ('peak', 2800, 4.5, 0.9),
+                           ('peak', 5000, 3, 1.0), ('high', 7500, 4, 0.7)]:
+        b, a = biquad(kind, f0, g, q)
+        x = signal.lfilter(b, a, x)
+    x = x / (np.max(np.abs(x)) + 1e-9)
+    x = compress(x)
     return x / (np.max(np.abs(x)) + 1e-9) * 0.9
 
 
@@ -54,7 +85,7 @@ def reverb(x, secs=2.6, mix=0.25, seed=1):
 
 def adsr(n, a, r):
     e = np.ones(n)
-    na, nr = int(a * SR), int(r * SR)
+    na, nr = min(n, int(a * SR)), min(n, int(r * SR))
     e[:na] = np.linspace(0, 1, na)
     if nr:
         e[-nr:] *= np.linspace(1, 0, nr)
@@ -98,7 +129,7 @@ def music(dur, bpm=84):
             break
         ln = min(int(bar * SR), n - s0)
         tt = np.arange(ln) / SR
-        out[s0:s0 + ln] += np.sin(2 * np.pi * mtof(chords[i % 4][0] - 12) * tt) * adsr(ln, 0.3, 0.6) * 0.09
+        out[s0:s0 + ln] += np.sin(2 * np.pi * mtof(chords[i % 4][0] - 12) * tt) * adsr(ln, 0.3, 0.6) * 0.06
     # glassy pluck arpeggio on 8ths
     pattern = [2, 3, 4, 3, 1, 3, 4, 2]
     k = 0
@@ -184,7 +215,7 @@ def main():
     env = np.clip(env * 12, 0, 1)
     b, a = signal.butter(1, 3 / (SR / 2))
     env = signal.filtfilt(b, a, env)
-    duck = 1 - 0.5 * np.clip(env, 0, 1)
+    duck = 1 - 0.68 * np.clip(env, 0, 1)
 
     bed = music(total) * duck
     fade = np.ones(n)
@@ -204,13 +235,16 @@ def main():
         i = int(tp * SR)
         sfx[i:i + len(p)] += p
 
-    music_st = reverb(bed + sfx, 2.8, 0.35, seed=3)
-    vo_st = reverb(vo, 1.2, 0.08, seed=5)
-    mix = music_st * 0.9 + vo_st * 0.95
+    music_st = reverb(bed + sfx, 2.4, 0.25, seed=3)
+    # voice stays completely dry and centered: any reverb on it reads as 'small tiled room'
+    mix = music_st * 0.8 + np.stack([vo, vo]) * 1.0
     mix /= np.max(np.abs(mix)) / 0.89
     pcm = (mix.T * 32767).astype(np.int16)
     from scipy.io import wavfile
-    wavfile.write(os.path.join(OUT, 'soundtrack.wav'), SR, pcm)
+    wavfile.write(os.path.join(OUT, 'soundtrack_raw.wav'), SR, pcm)
+    # Instagram plays around -14 LUFS; normalise so the voice doesn't come out quiet
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', os.path.join(OUT, 'soundtrack_raw.wav'),
+                    '-af', 'loudnorm=I=-14:TP=-1.5:LRA=11', '-ar', str(SR), os.path.join(OUT, 'soundtrack.wav')], check=True)
     print('duration', total)
     for tm in timing:
         print(tm['id'], tm['start'], tm['end'])

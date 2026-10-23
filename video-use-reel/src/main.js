@@ -35,7 +35,7 @@ const grainFrames = Array.from({ length: 6 }, () => {
 });
 
 // ---------- captions ----------
-const HL = ['چت', 'Claude', 'Code', 'می‌خونه!', 'خودکار.', '۱۲', 'کیلوبایت', 'چک', 'متن‌باز.', '«میخوام»', '«اِممم»ها،'];
+const HL = ['چت', 'چت!', 'Claude', 'می‌خونه!', 'خودکار.', 'سینمایی،', '۱۲', 'کیلوبایت', 'چک', 'متن‌بازه!', '«میخوام»', '«اِممم»ها،', 'نهایی', 'حذفشون']; 
 const cap = $('cap');
 const capLines = timing.lines.map((l) => {
   const div = document.createElement('div');
@@ -92,7 +92,7 @@ function hook(t) {
   $('hookSpark').style.opacity = sp;
   $('hookSpark').style.transform = `rotate(${(1 - sp) * -120 + t * 12}deg) scale(${0.3 + 0.7 * back(seg(t, 0.05, 0.8))})`;
   show($('hk1'), easeOut(seg(u, -0.2, 0.4)), 40);
-  show($('hk2'), easeOut(seg(u, 0.9, 1.4)), 40, 0.9);
+  show($('hk2'), easeOut(seg(u, 1.5, 2.0)), 40, 0.9);
   const cb = easeOut(seg(u, 0.1, 0.7));
   $('chatbar').style.opacity = cb;
   $('chatbar').style.transform = `translateY(${(1 - cb) * 80}px)`;

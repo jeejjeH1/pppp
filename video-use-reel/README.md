@@ -1,12 +1,12 @@
 # video-use — Instagram Reel (motion graphic)
 
-A 42-second, 1080×1920, 30 fps Reel introducing [browser-use/video-use](https://github.com/browser-use/video-use), with a Persian voiceover.
+A 46-second, 1080×1920, 30 fps Reel introducing [browser-use/video-use](https://github.com/browser-use/video-use), with a Persian voiceover.
 
 **Video:** [`video/video-use-reel.mp4`](video/video-use-reel.mp4)
 
 - Theme: warm dark background, cream text, coral accent, and a hand-drawn 12-ray spark
 - Fonts: Vazirmatn (Persian), Source Serif 4, JetBrains Mono
-- Voice: Piper TTS, `fa_IR-gyro-medium`, offline
+- Voice: Piper TTS, `fa_IR-gyro-medium`, offline. It stays dry (no reverb) and is EQd, because the raw model output is very bottom-heavy and sounds boxy. The mix is normalised to -14 LUFS
 - Music: procedural ambient bed (pad, sub, glass arpeggio, soft kick) that ducks under the voice, plus whoosh transitions
 - Word-by-word Persian captions placed above the Reels UI safe area
 - Ends with the CTA: comment «میخوام» to get the repo link
@@ -15,7 +15,7 @@ A 42-second, 1080×1920, 30 fps Reel introducing [browser-use/video-use](https:/
 
 | Scene | Content |
 | --- | --- |
-| hook | "Edit your videos, just by chatting" + typing into a prompt bar |
+| hook | "Hours of editing? Just chat!" + typing into a prompt bar |
 | intro | video-use: raw footage → chat with Claude Code → final.mp4 |
 | cuts | waveform; the "umm"s and silences are cut out |
 | polish | color grade + subtitles + animation on a sample frame |
