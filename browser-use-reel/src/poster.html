@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<title>browser-use poster</title>
+<style>
+  @font-face { font-family: 'Vazir'; font-weight: 700; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-arabic-700-normal.woff2); }
+  @font-face { font-family: 'Vazir'; font-weight: 900; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-arabic-900-normal.woff2); }
+  @font-face { font-family: 'Serif'; font-weight: 600; src: url(/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-600-normal.woff2); }
+  @font-face { font-family: 'Mono'; font-weight: 400; src: url(/node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2); }
+  @font-face { font-family: 'Mono'; font-weight: 700; src: url(/node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2); }
+  :root { --bg: #FBF8F3; --ink: #1C1A16; --muted: #8A8276; --line: #E7E0D5;
+          --coral: #E8623A; --blue: #3D7BF2; --yellow: #F5B83D; --lilac: #9466F0; --green: #22A86B; --pink: #EE4F86; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); color: var(--ink); }
+  .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .34; }
+  .abs { position: absolute; }
+  .cx { left: 0; right: 0; text-align: center; }
+  .fa { font-family: 'Vazir'; direction: rtl; }
+  .kick { font-family: 'Mono'; font-weight: 700; font-size: 28px; letter-spacing: .16em; color: var(--blue); }
+  .head { font-weight: 900; font-size: 116px; line-height: 1.22; }
+  .head .c { color: var(--coral); }
+  .win { position: absolute; left: 130px; width: 820px; top: 820px; height: 530px; background: #fff; border: 2px solid var(--line); border-radius: 32px; overflow: hidden;
+         box-shadow: 0 40px 90px rgba(80,50,20,.18); transform: rotate(-3deg); }
+  .bar { height: 70px; background: #F2EEE8; display: flex; align-items: center; gap: 12px; padding: 0 24px; }
+  .bar i { width: 18px; height: 18px; border-radius: 50%; display: inline-block; }
+  .url { margin-left: 14px; flex: 1; height: 42px; border-radius: 21px; background: #fff; font-family: 'Mono'; font-size: 22px; color: #8A8276; display: flex; align-items: center; padding: 0 20px; }
+  .form { padding: 34px 46px; }
+  .h4 { font-family: 'Serif'; font-weight: 600; font-size: 42px; margin-bottom: 18px; }
+  .lab { font-family: 'Mono'; font-size: 20px; color: #9A9284; margin: 14px 0 8px; }
+  .inp { height: 64px; border-radius: 14px; border: 3px solid var(--coral); font-family: 'Mono'; font-size: 30px; display: flex; align-items: center; padding: 0 18px; }
+  .row { display: flex; gap: 14px; }
+  .opt { flex: 1; height: 64px; border-radius: 14px; border: 2px solid #E3DDD3; font-family: 'Mono'; font-size: 28px; display: flex; align-items: center; justify-content: center; }
+  .opt.sel { background: var(--coral); border-color: var(--coral); color: #fff; }
+  .ok { margin-top: 26px; height: 80px; border-radius: 18px; background: var(--green); color: #fff; font-family: 'Mono'; font-weight: 700; font-size: 32px; display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .chip { position: absolute; font-family: 'Mono'; font-weight: 700; font-size: 30px; padding: 14px 28px; border-radius: 999px; background: #fff; border: 3px solid; box-shadow: 0 14px 30px rgba(80,50,20,.12); }
+  .brand { font-family: 'Serif'; font-weight: 600; font-size: 112px; letter-spacing: -0.03em; }
+  .tag { display: inline-block; font-family: 'Vazir'; font-weight: 700; font-size: 40px; padding: 14px 36px; border-radius: 999px; background: var(--ink); color: #fff; }
+</style>
+</head>
+<body>
+  <div class="blob" style="background:#E8623A;width:760px;height:760px;left:-240px;top:-160px"></div>
+  <div class="blob" style="background:#3D7BF2;width:700px;height:700px;left:600px;top:420px"></div>
+  <div class="blob" style="background:#F5B83D;width:620px;height:620px;left:-220px;top:1100px"></div>
+  <div class="blob" style="background:#9466F0;width:640px;height:640px;left:560px;top:1350px"></div>
+  <div class="blob" style="background:#EE4F86;width:480px;height:480px;left:300px;top:700px;opacity:.18"></div>
+
+  <svg class="abs" style="left:480px;top:300px;width:120px;height:120px" viewBox="-50 -50 100 100"><g id="spark" fill="#E8623A"></g></svg>
+  <div class="abs cx kick" style="top:420px">THE OPEN-SOURCE BROWSER AGENT</div>
+  <div class="abs cx fa head" style="top:470px">تو فقط بگو،<br><span class="c">خودش</span> انجام میده!</div>
+
+  <div class="win">
+    <div class="bar"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i><div class="url">book.example.com</div></div>
+    <div class="form">
+      <div class="h4">Book an appointment</div>
+      <div class="lab">NAME</div><div class="inp">Sara|</div>
+      <div class="lab">DAY · TIME</div>
+      <div class="row"><div class="opt">Thu</div><div class="opt sel">Fri</div><div class="opt sel">10:30</div><div class="opt">14:00</div></div>
+      <div class="ok"><svg width="38" height="38" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Booked · Fri 10:30</div>
+    </div>
+  </div>
+  <svg class="abs" style="left:800px;top:1290px;width:76px;height:76px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.25))" viewBox="0 0 24 24"><path d="M4 2l16 9-7 2-3 7z" fill="#1C1A16" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+
+  <div class="chip" style="left:70px;top:770px;color:var(--coral);border-color:var(--coral);transform:rotate(-6deg)">click</div>
+  <div class="chip" style="left:840px;top:880px;color:var(--blue);border-color:var(--blue);transform:rotate(7deg)">type</div>
+  <div class="chip" style="left:60px;top:1275px;color:var(--lilac);border-color:var(--lilac);transform:rotate(5deg)">any LLM</div>
+  <div class="chip" style="left:860px;top:1305px;color:var(--green);border-color:var(--green);transform:rotate(-5deg)">MIT</div>
+
+  <div class="abs cx brand" style="top:1395px">browser<span style="color:var(--coral)">-</span>use</div>
+  <div class="abs cx" style="top:1540px"><span class="tag">رایگان و متن‌باز</span></div>
+
+  <script>
+    // same hand-drawn 12-ray spark as the reel
+    let s = 12345; const rand = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+    const g = document.getElementById('spark'), NS = 'http://www.w3.org/2000/svg';
+    for (let i = 0; i < 12; i++) {
+      const len = (i % 2 ? 34 : 44) + (rand() - 0.5) * 8, r = document.createElementNS(NS, 'rect');
+      Object.entries({ x: -3.6, y: -len, width: 7.2, height: len - 2, rx: 3.6, transform: `rotate(${i * 30 + (rand() - 0.5) * 7})` }).forEach(([k, v]) => r.setAttribute(k, v));
+      g.appendChild(r);
+    }
+    const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', 7); g.appendChild(c);
+    document.fonts.ready.then(() => Promise.all([...document.fonts].map((f) => f.load()))).then(() => { window.__ready = true; });
+  </script>
+</body>
+</html>
