@@ -1280,7 +1280,6 @@ function hud(t, light, a) {
   const col = light ? '32,32,32' : '223,216,208';
   ox.save();
   ox.globalAlpha = a;
-  corners(ox, 44, 44, W - 44, H - 44, 30, `rgba(${col},.45)`, 1.5);
   ox.font = F(13, MONO, 500); ox.letterSpacing = '4px'; ox.fillStyle = `rgba(${col},.5)`;
   const sIdx = TL.scenes.findIndex(([, a0, b0]) => t >= a0 && t < b0);
   const names = ['OPEN', 'TITLE', 'VLA', 'DEPLOY', 'LATENCY', 'EXECUTION', 'ROLLOUTS', 'THE GAP', 'TAKEAWAY', 'PRISMAX'];
@@ -1288,9 +1287,8 @@ function hud(t, light, a) {
   ox.textAlign = 'right'; ox.fillText('LATENCY × π0.5 ROLLOUT', W - 92, 68);
   const fr = Math.floor((t % 1) * 24), ss = Math.floor(t) % 60, mm = Math.floor(t / 60);
   ox.textAlign = 'left';
-  ox.fillText(`TC 00:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}:${String(fr).padStart(2, '0')}`, 112, H - 58);
-  if (Math.floor(t * 2) % 2 === 0) { ox.fillStyle = BRONZE; ox.beginPath(); ox.arc(96, H - 63, 5, 0, TAU); ox.fill(); }
-  ox.fillStyle = `rgba(${col},.5)`; ox.textAlign = 'right';
+  ox.fillText(`TC 00:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}:${String(fr).padStart(2, '0')}`, 92, H - 58);
+  ox.textAlign = 'right';
   ox.fillText(`${String(sIdx + 1).padStart(2, '0')} / ${TL.scenes.length}  ${names[sIdx] || ''}`, W - 92, H - 58);
   // progress
   ox.fillStyle = `rgba(${col},.12)`; ox.fillRect(560, H - 63, W - 1120, 2);
