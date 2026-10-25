@@ -1,0 +1,18 @@
+{
+  "name": "prismax-motion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prismax — Latency vs. π0.5 rollout performance: 16:9 motion piece for X/Twitter",
+  "scripts": {
+    "audio": "python3 src/audio.py src/timeline.json out/soundtrack.wav",
+    "stills": "node src/render.cjs --stills auto",
+    "render": "npm run audio && node src/render.cjs --fps 60 --workers 4"
+  },
+  "dependencies": {
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/noto-serif-display": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0"
+  }
+}
