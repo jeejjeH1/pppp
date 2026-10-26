@@ -177,6 +177,8 @@ def render(fi):
 
 
 def draw_texts(img, t):
+    if os.environ.get("NOTEXT"):
+        return
     for (t0, t1, txt, fp, size, y, col) in TEXTS:
         if not (t0 <= t < t1):
             continue
