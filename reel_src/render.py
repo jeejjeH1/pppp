@@ -19,6 +19,9 @@ WHITE = (255, 255, 255)
 # segments: (out_start, out_end, src_start, src_end, style)
 # style: dict(box=fg height, cx, cy (source px), zoom, bw, grade)
 B = lambda n: n * BAR
+# Mourinho knee-slide clip: bottom half of the split-screen upload, below the watermark band
+MOU = dict(file="/root/.claude/uploads/87c4379c-2049-51b6-b958-ed8fe16ba005/fb45732f-1792994053894.mp4",
+           vf="crop=460:370:140:430", fps=30)
 SEGS = [
     (0.0,      B(2),       5.0,   7.9,   dict(box=860, cx=427, cy=240, bw=0.0, dark=0.25)),
     (B(2),     B(4),       8.0,   10.15, dict(box=1250, cx=420, cy=250)),
@@ -27,12 +30,13 @@ SEGS = [
     (B(8),     B(10),      146.0, 149.5, dict(box=1250, cx=430, cy=240, bw=1.0, dark=0.15)),
     (B(10),    B(10)+1.83, 170.0, 172.6, dict(box=900, cx=420, cy=260)),
     (B(10)+1.83, B(12),    172.6, 173.8, dict(box=1000, cx=400, cy=300)),
-    (B(12),    B(14),      167.0, 170.0, dict(box=1100, cx=400, cy=270)),
-    (B(14),    B(16),      176.9, 179.9, dict(box=1250, cx=430, cy=250)),
-    (B(16),    TOTAL,      8.3,   10.15,  dict(box=1250, cx=330, cy=230, bw=0.55, dark=0.1)),
+    (B(12),    B(13),      167.0, 168.8, dict(box=1100, cx=400, cy=270)),
+    (B(13),    B(15),      1.7,   4.2,   dict(box=1100, cx=200, cy=185, **MOU)),
+    (B(15),    B(16),      177.4, 179.6, dict(box=1250, cx=430, cy=250)),
+    (B(16),    TOTAL,      2.2,   4.0,   dict(box=1250, cx=200, cy=185, bw=0.55, dark=0.1, **MOU)),
 ]
 CUTS = [s[0] for s in SEGS[1:]]
-GOAL_HITS = [B(6), B(12)]              # big shake + flash
+GOAL_HITS = [B(6), B(12), B(13)]              # big shake + flash
 DROP_BARS = list(range(4, 8)) + list(range(10, 16))
 KICKS = [b * BAR + k * BEAT for b in DROP_BARS for k in (0, 2, 2.5)] + [B(2), B(3), B(16)]
 
@@ -62,9 +66,11 @@ FRAMES = {}  # seg index -> np array (n, SH, SW, 3)
 def load():
     for i, (o0, o1, s0, s1, st) in enumerate(SEGS):
         dur = s1 - s0 + 0.2
-        raw = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{s0:.3f}", "-t", f"{dur:.3f}", "-i", SRC,
-                              "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True, check=True).stdout
-        FRAMES[i] = np.frombuffer(raw, np.uint8).reshape(-1, SH, SW, 3)
+        vf = ["-vf", st["vf"]] if "vf" in st else []
+        raw = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{s0:.3f}", "-t", f"{dur:.3f}", "-i", st.get("file", SRC),
+                              *vf, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True, check=True).stdout
+        sw, sh = (460, 370) if "vf" in st else (SW, SH)
+        FRAMES[i] = np.frombuffer(raw, np.uint8).reshape(-1, sh, sw, 3)
 
 
 _font_cache = {}
@@ -80,7 +86,7 @@ def src_frame(i, t):
     u = (t - o0) / (o1 - o0)
     ts = u * (s1 - s0)
     fr = FRAMES[i]
-    x = ts * SFPS
+    x = ts * st.get("fps", SFPS)
     a = int(math.floor(x)); f = x - a
     a = max(0, min(len(fr) - 1, a)); b = min(len(fr) - 1, a + 1)
     if f < 0.05 or a == b:
@@ -110,6 +116,7 @@ def render(fi):
     i = min(i, len(SEGS) - 1)
     o0, o1, s0, s1, st = SEGS[i]
     fr = src_frame(i, min(t, o1 - 1e-3))
+    SH, SW = fr.shape[:2]
 
     # punch-zoom on kicks, slow push within segment
     punch = sum(0.07 * math.exp(-(t - k) * 11) for k in KICKS if 0 <= t - k < 0.5)
